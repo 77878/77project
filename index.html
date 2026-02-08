@@ -13,8 +13,20 @@
     <style>
         body { background-color: #0b1120; color: #f1f5f9; font-family: system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
         .card { background-color: #1e293b; border-radius: 20px; padding: 1.25rem; border: 1px solid #334155; }
-        input { background: #0f172a; border: 1px solid #475569; border-radius: 10px; padding: 8px; color: #38bdf8; width: 100%; text-align: right; font-weight: 700; }
-        .stat-label { font-size: 0.7rem; color: #94a3b8; font-weight: 700; margin-bottom: 2px; display: block; }
+        /* 加大後的輸入框樣式 */
+        input { 
+            background: #0f172a; 
+            border: 1px solid #475569; 
+            border-radius: 12px; 
+            padding: 12px; /* 增加上下間距 */
+            color: #38bdf8; 
+            width: 100%; 
+            text-align: right; 
+            font-weight: 800; 
+            font-size: 1.1rem; /* 增加字體 */
+        }
+        input:focus { border-color: #38bdf8; outline: none; background: #1e293b; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; font-weight: 700; margin-bottom: 4px; display: block; }
         .action-card { border-radius: 16px; padding: 1rem; border-left: 5px solid #10b981; background: rgba(16, 185, 129, 0.1); }
         .status-badge { font-size: 11px; padding: 2px 10px; border-radius: 99px; font-weight: bold; }
         .gap-red { color: #f87171; } .gap-green { color: #4ade80; }
@@ -33,43 +45,49 @@
                 <div id="chart_legend" class="text-[10px] space-y-1"></div>
             </div>
         </div>
+
         <div class="card border-l-4 border-l-emerald-500">
             <div class="flex justify-between items-center mb-3">
-                <h2 class="text-[10px] font-black text-emerald-400 uppercase">執行動作 & 缺口</h2>
+                <h2 class="text-[10px] font-black text-emerald-400 uppercase">執行動作 & 比例缺口</h2>
                 <span id="supply_status" class="status-badge">--</span>
             </div>
             <div id="gap_analysis" class="grid grid-cols-3 gap-2 mb-4 text-[10px] font-mono border-b border-slate-700 pb-3"></div>
             <div id="instruction_content" class="space-y-3 text-sm"></div>
         </div>
+
         <div class="card">
             <h2 class="text-[10px] font-black text-slate-400 mb-3 uppercase">資產部位盤點 (萬元)</h2>
-            <div class="grid grid-cols-2 gap-3">
-                <div class="col-span-2"><span class="stat-label">航空母艦 (006208)</span><input type="number" id="v_base" value="66" oninput="saveAndCalc()"></div>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="col-span-2"><span class="stat-label">現有資產 (006208 等)</span><input type="number" id="v_base" value="66" oninput="saveAndCalc()"></div>
                 <div><span class="stat-label">原型 (00662)</span><input type="number" id="v_etf" value="20" oninput="saveAndCalc()"></div>
                 <div><span class="stat-label">槓桿 (00631L)</span><input type="number" id="v_lev" value="20" oninput="saveAndCalc()"></div>
                 <div><span class="stat-label">債券 (865B)</span><input type="number" id="v_cash" value="0" oninput="saveAndCalc()"></div>
                 <div><span class="stat-label">流動現金</span><input type="number" id="v_pocket" value="18.5" oninput="saveAndCalc()"></div>
             </div>
         </div>
+
         <div class="card bg-slate-900/50 border-slate-800">
-            <h2 class="text-[10px] font-black text-indigo-400 mb-3 uppercase">風險監控</h2>
+            <h2 class="text-[10px] font-black text-indigo-400 mb-3 uppercase font-bold">風險監控</h2>
             <div class="grid grid-cols-2 gap-4 mb-4">
-                <div><span class="stat-label">質押市值</span><input type="number" id="m_pledge" value="20" oninput="saveAndCalc()"></div>
-                <div><span class="stat-label">借款金額</span><input type="number" id="m_loan" value="0" oninput="saveAndCalc()"></div>
+                <div><span class="stat-label uppercase font-bold">質押市值</span><input type="number" id="m_pledge" value="20" oninput="saveAndCalc()"></div>
+                <div><span class="stat-label uppercase font-bold">借款金額</span><input type="number" id="m_loan" value="0" oninput="saveAndCalc()"></div>
             </div>
-            <div class="bg-black/40 p-3 rounded-xl flex justify-between items-center border border-slate-800">
-                <span class="stat-label m-0 uppercase text-zinc-400">維持率</span>
-                <span id="m_rate_display" class="text-2xl font-black">--%</span>
+            <div class="bg-black/40 p-4 rounded-xl flex justify-between items-center border border-slate-800">
+                <span class="stat-label m-0 uppercase text-zinc-400 font-bold">當前維持率</span>
+                <span id="m_rate_display" class="text-3xl font-black">--%</span>
             </div>
-            <input type="range" id="v_drop" min="0" max="40" value="0" class="w-full h-2 bg-slate-700 rounded-lg appearance-none mt-4" oninput="saveAndCalc()">
-            <p id="drop_text" class="text-center text-[10px] text-slate-500 mt-1">模擬跌幅: 0%</p>
+            <div class="mt-6">
+                <input type="range" id="v_drop" min="0" max="40" value="0" class="w-full h-3 bg-slate-700 rounded-lg appearance-none cursor-pointer" oninput="saveAndCalc()">
+                <p id="drop_text" class="text-center text-[11px] text-slate-500 mt-2 font-bold uppercase tracking-widest">模擬跌幅: 0%</p>
+            </div>
         </div>
     </div>
+
     <script>
         let myChart;
         function saveAndCalc() {
             const data = { vB: document.getElementById('v_base').value, vE: document.getElementById('v_etf').value, vL: document.getElementById('v_lev').value, vC: document.getElementById('v_cash').value, vP: document.getElementById('v_pocket').value, mL: document.getElementById('m_loan').value, mP: document.getElementById('m_pledge').value, vD: document.getElementById('v_drop').value };
-            localStorage.setItem('invest_v5_6', JSON.stringify(data));
+            localStorage.setItem('invest_v5_6_final', JSON.stringify(data));
             calculate(data);
         }
         function calculate(data) {
@@ -92,7 +110,7 @@
             const mRate = mL > 0 ? ((mP * (1 - drop/100)) / mL) * 100 : 999;
             const rateDisp = document.getElementById('m_rate_display');
             rateDisp.innerText = mL > 0 ? mRate.toFixed(0) + "%" : "N/A";
-            rateDisp.className = `text-2xl font-black ${mRate < 140 ? 'text-red-500 animate-bounce' : mRate < 166 ? 'text-yellow-500' : 'text-emerald-400'}`;
+            rateDisp.className = `text-3xl font-black ${mRate < 140 ? 'text-red-500 animate-bounce' : mRate < 166 ? 'text-yellow-500' : 'text-emerald-400'}`;
             const tE = battleTotal * 0.4, tL = battleTotal * 0.4, tC = battleTotal * 0.2;
             const gE = vE - tE, gL = vL - tL, gC = vC - tC;
             const formatGap = (v) => v > 0 ? `<span class="gap-red">+${v.toFixed(1)}</span>` : `<span class="gap-green">${v.toFixed(1)}</span>`;
@@ -102,13 +120,13 @@
             let hunt = drop >= 20 ? 10 : drop >= 10 ? 5 : 0;
             if (mRate < 166 && mL > 0) { insEl.innerHTML = `<div class="action-card border-red-500">維持率急救：買入 00662 +2.5萬</div>`; }
             else if (hunt > 0) { insEl.innerHTML = `<div class="action-card border-yellow-500">進攻動作：買入 ${hunt >= 10 ? '00631L' : '00662'} +${hunt}萬</div>`; }
-            else { insEl.innerHTML = isSupplied ? `<p class="text-center py-4 text-slate-500 italic">目前戰線平穩</p>` : `<p class="text-blue-400 text-xs font-bold italic mb-1">11 號補給建議</p><div class="grid grid-cols-3 gap-2 text-center text-[11px]"><div class="bg-slate-800 p-2 rounded">原型<br>+${(Math.max(0,tE-vE+1)).toFixed(1)}</div><div class="bg-slate-800 p-2 rounded">槓桿<br>+${(Math.max(0,tL-vL+1)).toFixed(1)}</div><div class="bg-slate-800 p-2 rounded">債券<br>+${(Math.max(0,tC-vC+1)).toFixed(1)}</div></div>`; }
+            else { insEl.innerHTML = isSupplied ? `<p class="text-center py-4 text-slate-500 italic">目前戰線平穩</p>` : `<p class="text-blue-400 text-xs font-bold italic mb-1">11 號補給建議</p><div class="grid grid-cols-3 gap-2 text-center text-[11px]"><div class="bg-slate-800 p-2 rounded">原型<br>+${(Math.max(0,tE-vE+0.1)).toFixed(1)}</div><div class="bg-slate-800 p-2 rounded">槓桿<br>+${(Math.max(0,tL-vL+0.1)).toFixed(1)}</div><div class="bg-slate-800 p-2 rounded">債券<br>+${(Math.max(0,tC-vC+0.1)).toFixed(1)}</div></div>`; }
             if (myChart) { myChart.data.datasets[0].data = [vE, vL, vC]; myChart.update(); }
         }
         window.onload = () => {
             const ctx = document.getElementById('assetChart').getContext('2d');
             myChart = new Chart(ctx, { type: 'doughnut', data: { datasets: [{ data: [40,40,20], backgroundColor: ['#3b82f6', '#a855f7', '#10b981'], borderWidth: 0 }] }, options: { cutout: '75%', plugins: { legend: { display: false } } } });
-            const s = localStorage.getItem('invest_v5_6');
+            const s = localStorage.getItem('invest_v5_6_final');
             if (s) { const d = JSON.parse(s); document.getElementById('v_base').value = d.vB; document.getElementById('v_etf').value = d.vE; document.getElementById('v_lev').value = d.vL; document.getElementById('v_cash').value = d.vC; document.getElementById('v_pocket').value = d.vP; document.getElementById('m_loan').value = d.mL; document.getElementById('m_pledge').value = d.mP; document.getElementById('v_drop').value = d.vD; calculate(d); } else { saveAndCalc(); }
         };
     </script>
