@@ -5,10 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>投資筆記 V6.2</title>
+    <title>投資筆記 V6.4</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then(reg => {
+                    reg.onupdatefound = () => {
+                        const installingWorker = reg.installing;
+                        installingWorker.onstatechange = () => {
+                            if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                window.location.reload();
+                            }
+                        };
+                    };
+                }).catch(err => console.log('SW Error:', err));
+            });
+        }
+    </script>
     
     <style>
         body { background-color: #0b1120; color: #f1f5f9; font-family: system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -19,6 +36,8 @@
         }
         .stat-label { font-size: 0.75rem; color: #94a3b8; font-weight: 700; margin-bottom: 4px; display: block; }
         .gap-red { color: #f87171; } .gap-green { color: #4ade80; }
+        .action-box { border-radius: 12px; padding: 10px; background: rgba(56, 189, 248, 0.1); border-left: 4px solid #38bdf8; }
+        .bonus-input { border-color: #a855f7; color: #a855f7; } /* 獎金欄位用紫色區分 */
     </style>
 </head>
 <body class="p-4 pb-12">
@@ -26,13 +45,27 @@
         <div class="card flex items-center justify-between gap-4">
             <div style="width: 100px; height: 100px;"><canvas id="assetChart"></canvas></div>
             <div class="flex-1">
-                <p class="stat-label uppercase text-zinc-500">總資產淨值</p>
+                <p class="stat-label">總資產淨值</p>
                 <p id="total_val" class="text-2xl font-black text-white">計算中...</p>
                 <div class="flex gap-4 mt-2 pt-2 border-t border-slate-700">
-                    <div><p class="stat-label">Beta</p><p id="q_beta" class="font-bold">--</p></div>
-                    <div><p class="stat-label">平衡</p><p id="rebalance_timer" class="font-bold">--</p></div>
+                    <div><p class="stat-label text-blue-400">Beta</p><p id="q_beta" class="font-bold">--</p></div>
+                    <div><p class="stat-label text-orange-400">距離平衡</p><p id="rebalance_timer" class="font-bold">--</p></div>
                 </div>
             </div>
+        </div>
+
+        <div class="card border-l-4 border-l-emerald-500">
+            <div class="flex justify-between items-center mb-2">
+                <h2 class="text-[10px] font-black text-emerald-400 uppercase italic">智能執行建議</h2>
+                <span id="supply_status" class="text-[10px] bg-slate-700 px-2 py-1 rounded">--</span>
+            </div>
+            <div id="gap_analysis" class="grid grid-cols-3 gap-2 text-center text-sm font-bold mb-3 border-b border-slate-700 pb-3"></div>
+            <div id="instruction_content" class="space-y-2"></div>
+        </div>
+
+        <div class="card bg-indigo-900/20 border-indigo-500/50">
+            <span class="stat-label text-indigo-400 font-black">💰 額外獎金投入 (萬元)</span>
+            <input type="number" id="v_bonus" value="0" class="bonus-input" placeholder="輸入金額後自動分配..." oninput="run()">
         </div>
 
         <div class="card space-y-4">
@@ -48,23 +81,17 @@
             </div>
         </div>
 
-        <div class="card">
-            <h2 class="text-[10px] font-black text-emerald-400 mb-2 uppercase italic">4:4:2 Gap Analysis</h2>
-            <div id="gap_analysis" class="grid grid-cols-3 gap-2 text-center text-sm font-bold border-b border-slate-700 pb-3 mb-3"></div>
-            <div id="instruction_content" class="text-xs text-slate-400 italic"></div>
-        </div>
-
         <div class="card bg-slate-900/50">
             <div class="grid grid-cols-2 gap-4 mb-4">
-                <div><span class="stat-label uppercase">質押市值</span><input type="number" id="m_pledge" value="20" oninput="run()"></div>
-                <div><span class="stat-label uppercase">借款金額</span><input type="number" id="m_loan" value="0" oninput="run()"></div>
+                <div><span class="stat-label">質押市值</span><input type="number" id="m_pledge" value="20" oninput="run()"></div>
+                <div><span class="stat-label">借款金額</span><input type="number" id="m_loan" value="0" oninput="run()"></div>
             </div>
-            <div class="bg-black/40 p-4 rounded-xl flex justify-between items-center">
-                <span class="stat-label m-0">當前維持率</span>
+            <div class="bg-black/40 p-4 rounded-xl flex justify-between items-center border border-slate-800">
+                <span class="stat-label m-0">維持率</span>
                 <span id="m_rate_display" class="text-3xl font-black text-emerald-400">--%</span>
             </div>
             <input type="range" id="v_drop" min="0" max="40" value="0" class="w-full mt-6" oninput="run()">
-            <p id="drop_text" class="text-center text-[10px] text-slate-500 mt-2 font-bold uppercase">模擬跌幅: 0%</p>
+            <p id="drop_text" class="text-center text-[10px] text-slate-500 mt-2 font-bold">模擬跌幅: 0%</p>
         </div>
     </div>
 
@@ -72,7 +99,6 @@
         let myChart;
 
         function run() {
-            // 抓取數值
             const vB = parseFloat(document.getElementById('v_base').value) || 0;
             const vE = parseFloat(document.getElementById('v_etf').value) || 0;
             const vL = parseFloat(document.getElementById('v_lev').value) || 0;
@@ -81,20 +107,18 @@
             const mL = parseFloat(document.getElementById('m_loan').value) || 0;
             const mP = parseFloat(document.getElementById('m_pledge').value) || 0;
             const drop = parseFloat(document.getElementById('v_drop').value) || 0;
+            const bonus = parseFloat(document.getElementById('v_bonus').value) || 0;
 
-            // 1. 總額計算
             const total = vB + vE + vL + vC + vP;
             const battleTotal = vE + vL + vC;
             document.getElementById('total_val').innerText = total.toFixed(1) + " 萬";
 
-            // 2. 維持率
             const mRate = mL > 0 ? ((mP * (1 - drop/100)) / mL) * 100 : 999;
             const rateDisp = document.getElementById('m_rate_display');
             rateDisp.innerText = mL > 0 ? mRate.toFixed(0) + "%" : "N/A";
             rateDisp.className = `text-3xl font-black ${mRate < 140 ? 'text-red-500 animate-bounce' : mRate < 166 ? 'text-yellow-500' : 'text-emerald-400'}`;
             document.getElementById('drop_text').innerText = `模擬跌幅: ${drop}%`;
 
-            // 3. 缺口 (4:4:2)
             const tE = battleTotal * 0.4, tL = battleTotal * 0.4, tC = battleTotal * 0.2;
             const gE = vE - tE, gL = vL - tL, gC = vC - tC;
             const formatGap = (v) => v > 0 ? `<span class="gap-red">+${v.toFixed(1)}</span>` : `<span class="gap-green">${v.toFixed(1)}</span>`;
@@ -103,22 +127,49 @@
                 <div><p class="text-[10px] text-slate-500">槓桿</p>${formatGap(gL)}</div>
                 <div><p class="text-[10px] text-slate-500">債券</p>${formatGap(gC)}</div>`;
 
-            // 4. 圖表更新
-            if (myChart) {
-                myChart.data.datasets[0].data = [vE, vL, vC];
-                myChart.update();
-            }
+            const insEl = document.getElementById('instruction_content');
+            let tips = "";
 
-            // 5. 存檔
-            localStorage.setItem('invest_v6_data_v3', JSON.stringify({vB,vE,vL,vC,vP,mL,mP,drop}));
-            
-            // 簡單Beta計算
+            if (mRate < 166 && mL > 0) {
+                tips += `<div class="action-box border-red-500 text-red-400 font-bold">🚨 維持率破警戒線！建議優先補金或還款。</div>`;
+            } else if (drop >= 20) {
+                tips += `<div class="action-box border-yellow-500 text-yellow-500 font-bold">🎯 獵人準則啟動：跌幅達 20%，動用債券/現金加碼 00631L！</div>`;
+            } else if (bonus > 0) {
+                // 獎金分配邏輯
+                tips += `<div class="action-box border-indigo-500 bg-indigo-900/30">
+                            <p class="text-indigo-300 font-black mb-1">🎁 獎金分配建議 (4:4:2)：</p>
+                            <div class="flex gap-2 text-[11px]">
+                                <span class="bg-indigo-800 px-2 py-1 rounded">原型 +${(bonus * 0.4).toFixed(1)}</span>
+                                <span class="bg-indigo-800 px-2 py-1 rounded">槓桿 +${(bonus * 0.4).toFixed(1)}</span>
+                                <span class="bg-indigo-800 px-2 py-1 rounded">債券 +${(bonus * 0.2).toFixed(1)}</span>
+                            </div>
+                         </div>`;
+            } else {
+                const today = new Date().getDate();
+                document.getElementById('supply_status').innerText = today >= 11 ? "本月已入金" : "待11號入金";
+                let buyList = [];
+                if (gE < -0.5) buyList.push(`原型 ${Math.abs(gE).toFixed(1)}萬`);
+                if (gL < -0.5) buyList.push(`槓桿 ${Math.abs(gL).toFixed(1)}萬`);
+                if (gC < -0.5) buyList.push(`債券 ${Math.abs(gC).toFixed(1)}萬`);
+                tips = buyList.length > 0 ? 
+                    `<div class="text-[11px] text-slate-400 mb-1">依 4:4:2 平衡建議買入：</div><div class="flex gap-2">${buyList.map(i => `<span class="bg-blue-900/50 px-2 py-1 rounded text-blue-300">${i}</span>`).join('')}</div>` :
+                    `<div class="text-slate-500 italic text-center py-2">目前比例完美，無需動作</div>`;
+            }
+            insEl.innerHTML = tips;
+
+            const now = new Date();
+            const year = now.getFullYear();
+            const d1 = new Date(year, 5, 30), d2 = new Date(year, 11, 31);
+            let target = now > d1 ? d2 : d1;
+            if (now > d2) target = new Date(year + 1, 5, 30);
+            document.getElementById('rebalance_timer').innerText = Math.ceil((target - now) / 86400000) + "天";
+
+            if (myChart) { myChart.data.datasets[0].data = [vE, vL, vC]; myChart.update(); }
+            localStorage.setItem('invest_v6_data_v4', JSON.stringify({vB,vE,vL,vC,vP,mL,mP,drop,bonus}));
             document.getElementById('q_beta').innerText = total > 0 ? ((vB/total)*1 + (vE/total)*1.1 + (vL/total)*2.1).toFixed(2) : "0.00";
-            document.getElementById('rebalance_timer').innerText = "半年";
         }
 
         window.onload = () => {
-            // 初始化圖表
             const ctx = document.getElementById('assetChart').getContext('2d');
             myChart = new Chart(ctx, {
                 type: 'doughnut',
@@ -126,18 +177,18 @@
                 options: { cutout: '75%', plugins: { legend: { display: false } } }
             });
 
-            // 讀取存檔
-            const saved = localStorage.getItem('invest_v6_data_v3');
+            const saved = localStorage.getItem('invest_v6_data_v4');
             if (saved) {
                 const d = JSON.parse(saved);
-                document.getElementById('v_base').value = d.vB;
-                document.getElementById('v_etf').value = d.vE;
-                document.getElementById('v_lev').value = d.vL;
-                document.getElementById('v_cash').value = d.vC;
-                document.getElementById('v_pocket').value = d.vP;
-                document.getElementById('m_loan').value = d.mL;
-                document.getElementById('m_pledge').value = d.mP;
-                document.getElementById('v_drop').value = d.drop;
+                document.getElementById('v_base').value = d.vB || 66;
+                document.getElementById('v_etf').value = d.vE || 20;
+                document.getElementById('v_lev').value = d.vL || 20;
+                document.getElementById('v_cash').value = d.vC || 0;
+                document.getElementById('v_pocket').value = d.vP || 18.5;
+                document.getElementById('m_loan').value = d.mL || 0;
+                document.getElementById('m_pledge').value = d.mP || 20;
+                document.getElementById('v_drop').value = d.drop || 0;
+                document.getElementById('v_bonus').value = d.bonus || 0;
             }
             run();
         };
