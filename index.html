@@ -20,12 +20,11 @@
                         const installingWorker = reg.installing;
                         installingWorker.onstatechange = () => {
                             if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                // 偵測到代碼變動，立即強制刷新
                                 window.location.reload();
                             }
                         };
                     };
-                });
+                }).catch(err => console.log('SW registration failed:', err));
             });
         }
     </script>
@@ -117,7 +116,6 @@
                 mP: document.getElementById('m_pledge').value, 
                 vD: document.getElementById('v_drop').value 
             };
-            // 使用新的 Key 確保數據一致性
             localStorage.setItem('invest_v6_final_data', JSON.stringify(data));
             calculate(data);
         }
@@ -177,18 +175,17 @@
                 options: { cutout: '75%', plugins: { legend: { display: false } } } 
             });
             const s = localStorage.getItem('invest_v6_final_data');
-            if (s) { 
-                const d = JSON.parse(s); 
-                document.getElementById('v_base').value = d.vB || 66; 
-                document.getElementById('v_etf').value = d.vE || 20; 
-                document.getElementById('v_lev').value = d.vL || 20; 
-                document.getElementById('v_cash').value = d.vC || 0; 
-                document.getElementById('v_pocket').value = d.vP || 18.5; 
-                document.getElementById('m_loan').value = d.mL || 0; 
-                document.getElementById('m_pledge').value = d.mP || 20; 
-                document.getElementById('v_drop').value = d.vD || 0; 
-                calculate(d); 
-            } else { saveAndCalc(); }
+            const d = s ? JSON.parse(s) : { vB: 66, vE: 20, vL: 20, vC: 0, vP: 18.5, mL: 0, mP: 20, vD: 0 };
+            
+            document.getElementById('v_base').value = d.vB; 
+            document.getElementById('v_etf').value = d.vE; 
+            document.getElementById('v_lev').value = d.vL; 
+            document.getElementById('v_cash').value = d.vC; 
+            document.getElementById('v_pocket').value = d.vP; 
+            document.getElementById('m_loan').value = d.mL; 
+            document.getElementById('m_pledge').value = d.mP; 
+            document.getElementById('v_drop').value = d.vD; 
+            calculate(d);
         };
     </script>
 </body>
