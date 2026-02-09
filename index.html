@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
-    <title>投資筆記 V6.9</title>
+    <title>投資戰鬥機 V7.0</title>
 
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon.png">
@@ -18,7 +18,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <script>
-        // 自動更新與 Service Worker 註冊
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js').then(reg => {
@@ -45,7 +44,7 @@
         .stat-label { font-size: 0.65rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; }
         .gap-red { color: #f87171; font-weight: 900; } 
         .gap-green { color: #4ade80; font-weight: 900; }
-        .action-box { border-radius: 12px; padding: 10px; background: rgba(56, 189, 248, 0.1); border-left: 4px solid #38bdf8; }
+        .action-box { border-radius: 12px; padding: 12px; background: rgba(56, 189, 248, 0.1); border-left: 4px solid #38bdf8; }
     </style>
 </head>
 <body class="p-4 pb-12 text-sm">
@@ -78,11 +77,11 @@
         </div>
 
         <div class="card border-l-4 border-l-emerald-500 py-3">
-            <div class="flex justify-between items-center mb-1">
-                <h2 class="text-[10px] font-black text-emerald-400 uppercase italic">智能執行建議</h2>
-                <span id="supply_status" class="text-[9px] bg-slate-700 px-2 py-0.5 rounded text-slate-300">--</span>
+            <div class="flex justify-between items-center mb-2">
+                <h2 class="text-[10px] font-black text-emerald-400 uppercase italic tracking-wider">智能執行建議</h2>
+                <span id="supply_status" class="text-[9px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full border border-slate-700">自動掃描中</span>
             </div>
-            <div id="instruction_content" class="text-[11px] leading-relaxed"></div>
+            <div id="instruction_content" class="text-[13px] font-medium leading-relaxed"></div>
         </div>
 
         <div class="card bg-indigo-900/10 border-indigo-500/30">
@@ -149,10 +148,21 @@
 
                 const insEl = document.getElementById('instruction_content');
                 let tips = "";
-                if (mRate < 166 && mL > 0) tips = `<div class="action-box border-red-500 text-red-400 font-bold">🚨 優先補救維持率！</div>`;
-                else if (drop >= 20) tips = `<div class="action-box border-yellow-500 text-yellow-500 font-bold">🎯 獵人準則：進攻 00631L！</div>`;
-                else if (bonus > 0) tips = `<div class="action-box border-indigo-500 text-indigo-300">🎁 分配：原型+${(bonus*0.4).toFixed(1)}, 槓桿+${(bonus*0.4).toFixed(1)}, 債券+${(bonus*0.2).toFixed(1)}</div>`;
-                else tips = `<p class="text-slate-500 italic text-center py-1">戰鬥部位合計: ${battleTotal.toFixed(1)} 萬</p>`;
+                const today = new Date().getDate();
+
+                if (mRate < 166 && mL > 0) {
+                    tips = `<div class="action-box border-red-500 text-red-400 font-bold">🚨 優先補救維持率！建議補金或縮減借款。</div>`;
+                    document.getElementById('supply_status').innerText = "風險警告";
+                } else if (drop >= 20) {
+                    tips = `<div class="action-box border-yellow-500 text-yellow-500 font-bold">🎯 獵人準則：大跌達標！動用現金進攻槓桿部位。</div>`;
+                    document.getElementById('supply_status').innerText = "進攻模式";
+                } else if (bonus > 0) {
+                    tips = `<div class="action-box border-indigo-500 text-indigo-300 font-bold">🎁 獎金分配建議：<br>原型 +${(bonus*0.4).toFixed(1)} | 槓桿 +${(bonus*0.4).toFixed(1)} | 債券 +${(bonus*0.2).toFixed(1)}</div>`;
+                    document.getElementById('supply_status').innerText = "獎金模式";
+                } else {
+                    document.getElementById('supply_status').innerText = today >= 11 ? "配置平衡中" : "待11號入金";
+                    tips = `<p class="text-slate-400 italic text-center py-1">目前戰鬥部位合計 ${battleTotal.toFixed(1)} 萬，比例運行良好。</p>`;
+                }
                 insEl.innerHTML = tips;
 
                 const wB = total > 0 ? vB/total : 0, wE = total > 0 ? vE/total : 0, wL = total > 0 ? vL/total : 0, wC = total > 0 ? vC/total : 0;
@@ -167,7 +177,7 @@
                     myChart.data.datasets[0].data = [vE, vL, vC];
                     myChart.update();
                 }
-                localStorage.setItem('invest_v6_final', JSON.stringify({vB,vE,vL,vC,vP,mL,mP,drop,bonus}));
+                localStorage.setItem('invest_v7_final', JSON.stringify({vB,vE,vL,vC,vP,mL,mP,drop,bonus}));
             } catch (e) { console.error(e); }
         }
 
@@ -192,7 +202,7 @@
                     } 
                 }
             });
-            const saved = localStorage.getItem('invest_v6_final');
+            const saved = localStorage.getItem('invest_v7_final');
             if (saved) {
                 const d = JSON.parse(saved);
                 document.getElementById('v_base').value = d.vB || 66;
