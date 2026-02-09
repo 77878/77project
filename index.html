@@ -7,23 +7,25 @@
     <link rel="apple-touch-icon" href="icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>投資小筆記 Cloud</title>
+    <title>投資筆記 V6</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').then(reg => {
-                reg.onupdatefound = () => {
-                    const installingWorker = reg.installing;
-                    installingWorker.onstatechange = () => {
-                        if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            // 偵測到新版本，立即重新載入
-                            window.location.reload();
-                        }
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then(reg => {
+                    reg.onupdatefound = () => {
+                        const installingWorker = reg.installing;
+                        installingWorker.onstatechange = () => {
+                            if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                // 偵測到代碼變動，立即強制刷新
+                                window.location.reload();
+                            }
+                        };
                     };
-                };
+                });
             });
         }
     </script>
@@ -31,7 +33,6 @@
     <style>
         body { background-color: #0b1120; color: #f1f5f9; font-family: system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
         .card { background-color: #1e293b; border-radius: 20px; padding: 1.25rem; border: 1px solid #334155; }
-        /* 加大版輸入框 */
         input { 
             background: #0f172a; 
             border: 1px solid #475569; 
@@ -56,7 +57,7 @@
         <div class="card flex items-center justify-between gap-4">
             <div style="width: 120px; height: 120px;"><canvas id="assetChart"></canvas></div>
             <div class="flex-1 space-y-3">
-                <div><p class="stat-label uppercase">總資產淨值</p><p id="total_val" class="text-xl font-black text-white">--</p></div>
+                <div><p class="stat-label">總資產淨值</p><p id="total_val" class="text-xl font-black text-white">--</p></div>
                 <div class="grid grid-cols-2 gap-2 border-t border-slate-700 pt-2 text-center">
                     <div><p class="stat-label font-black text-blue-400">Beta</p><p id="q_beta" class="text-lg font-bold">--</p></div>
                     <div><p class="stat-label font-black text-orange-400">平衡倒數</p><p id="rebalance_timer" class="text-lg font-bold">--</p></div>
@@ -97,5 +98,98 @@
             </div>
             <div class="mt-6">
                 <input type="range" id="v_drop" min="0" max="40" value="0" class="w-full h-3 bg-slate-700 rounded-lg appearance-none cursor-pointer" oninput="saveAndCalc()">
-                <p id="drop_text" class="
+                <p id="drop_text" class="text-center text-[11px] text-slate-500 mt-2 font-bold uppercase tracking-widest">模擬跌幅: 0%</p>
+            </div>
+        </div>
+    </div>
 
+    <script>
+        let myChart;
+
+        function saveAndCalc() {
+            const data = { 
+                vB: document.getElementById('v_base').value, 
+                vE: document.getElementById('v_etf').value, 
+                vL: document.getElementById('v_lev').value, 
+                vC: document.getElementById('v_cash').value, 
+                vP: document.getElementById('v_pocket').value, 
+                mL: document.getElementById('m_loan').value, 
+                mP: document.getElementById('m_pledge').value, 
+                vD: document.getElementById('v_drop').value 
+            };
+            // 使用新的 Key 確保數據一致性
+            localStorage.setItem('invest_v6_final_data', JSON.stringify(data));
+            calculate(data);
+        }
+
+        function calculate(data) {
+            const now = new Date();
+            const year = now.getFullYear();
+            const d1 = new Date(year, 5, 30), d2 = new Date(year, 11, 31);
+            let target = now > d1 ? d2 : d1;
+            if (now > d2) target = new Date(year + 1, 5, 30);
+            document.getElementById('rebalance_timer').innerText = Math.ceil((target - now) / 86400000) + "D";
+
+            const isSupplied = now.getDate() >= 11;
+            const drop = parseFloat(data.vD) || 0;
+            document.getElementById('drop_text').innerText = `模擬跌幅: ${drop}%`;
+
+            const badge = document.getElementById('supply_status');
+            badge.innerText = isSupplied ? "本月已投" : "待 11 號入金";
+            badge.className = isSupplied ? "status-badge bg-slate-700 text-slate-400" : "status-badge bg-blue-600 text-white animate-pulse";
+
+            const vB = parseFloat(data.vB)||0, vE = parseFloat(data.vE)||0, vL = parseFloat(data.vL)||0, vC = parseFloat(data.vC)||0, vP = parseFloat(data.vP)||0, mL = parseFloat(data.mL)||0, mP = parseFloat(data.mP)||0;
+            const total = vB + vE + vL + vC + vP, battleTotal = vE + vL + vC;
+
+            document.getElementById('total_val').innerText = total.toFixed(1) + " 萬";
+            document.getElementById('q_beta').innerText = total > 0 ? ((vB/total)*1 + (vE/total)*1.1 + (vL/total)*2.1).toFixed(2) : "0.00";
+
+            const mRate = mL > 0 ? ((mP * (1 - drop/100)) / mL) * 100 : 999;
+            const rateDisp = document.getElementById('m_rate_display');
+            rateDisp.innerText = mL > 0 ? mRate.toFixed(0) + "%" : "N/A";
+            rateDisp.className = `text-3xl font-black ${mRate < 140 ? 'text-red-500 animate-bounce' : mRate < 166 ? 'text-yellow-500' : 'text-emerald-400'}`;
+
+            const tE = battleTotal * 0.4, tL = battleTotal * 0.4, tC = battleTotal * 0.2;
+            const gE = vE - tE, gL = vL - tL, gC = vC - tC;
+            const formatGap = (v) => v > 0 ? `<span class="gap-red">+${v.toFixed(1)}</span>` : `<span class="gap-green">${v.toFixed(1)}</span>`;
+
+            document.getElementById('gap_analysis').innerHTML = `<div class="text-center"><p>原型</p>${formatGap(gE)}</div><div class="text-center border-x border-slate-700"><p>槓桿</p>${formatGap(gL)}</div><div class="text-center"><p>債券</p>${formatGap(gC)}</div>`;
+            document.getElementById('chart_legend').innerHTML = `<div class="flex justify-between"><span>原型</span><span>${(battleTotal>0?vE/battleTotal*100:0).toFixed(0)}%</span></div><div class="flex justify-between"><span>槓桿</span><span>${(battleTotal>0?vL/battleTotal*100:0).toFixed(0)}%</span></div><div class="flex justify-between"><span>債券</span><span>${(battleTotal>0?vC/battleTotal*100:0).toFixed(0)}%</span></div>`;
+
+            const insEl = document.getElementById('instruction_content');
+            let hunt = drop >= 20 ? 10 : drop >= 10 ? 5 : 0;
+            if (mRate < 166 && mL > 0) {
+                insEl.innerHTML = `<div class="action-card border-red-500">🚨 維持率警告：建議買入 00662 +2.5 萬或償還欠款。</div>`;
+            } else if (hunt > 0) {
+                insEl.innerHTML = `<div class="action-card border-yellow-500">🎯 進攻指令：建議買入 ${hunt >= 10 ? '00631L' : '00662'} +${hunt} 萬。</div>`;
+            } else {
+                insEl.innerHTML = isSupplied ? `<p class="text-center py-4 text-slate-500 italic">目前資產配置正常。</p>` : `<p class="text-blue-400 text-xs font-bold italic mb-2">📅 11 號補給建議 (萬元)</p><div class="grid grid-cols-3 gap-2 text-center text-[11px]"><div class="bg-slate-800 p-2 rounded">原型<br>+${(Math.max(0,tE-vE+0.1)).toFixed(1)}</div><div class="bg-slate-800 p-2 rounded">槓桿<br>+${(Math.max(0,tL-vL+0.1)).toFixed(1)}</div><div class="bg-slate-800 p-2 rounded">債券<br>+${(Math.max(0,tC-vC+0.1)).toFixed(1)}</div></div>`;
+            }
+
+            if (myChart) { myChart.data.datasets[0].data = [vE, vL, vC]; myChart.update(); }
+        }
+
+        window.onload = () => {
+            const ctx = document.getElementById('assetChart').getContext('2d');
+            myChart = new Chart(ctx, { 
+                type: 'doughnut', 
+                data: { datasets: [{ data: [40,40,20], backgroundColor: ['#3b82f6', '#a855f7', '#10b981'], borderWidth: 0 }] }, 
+                options: { cutout: '75%', plugins: { legend: { display: false } } } 
+            });
+            const s = localStorage.getItem('invest_v6_final_data');
+            if (s) { 
+                const d = JSON.parse(s); 
+                document.getElementById('v_base').value = d.vB || 66; 
+                document.getElementById('v_etf').value = d.vE || 20; 
+                document.getElementById('v_lev').value = d.vL || 20; 
+                document.getElementById('v_cash').value = d.vC || 0; 
+                document.getElementById('v_pocket').value = d.vP || 18.5; 
+                document.getElementById('m_loan').value = d.mL || 0; 
+                document.getElementById('m_pledge').value = d.mP || 20; 
+                document.getElementById('v_drop').value = d.vD || 0; 
+                calculate(d); 
+            } else { saveAndCalc(); }
+        };
+    </script>
+</body>
+</html>
