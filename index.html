@@ -2,132 +2,157 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>獵人戰情室 V1.1 - 完全體</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>獵人戰情室 V7.2 - 智動平衡版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { background-color: #020617; color: #f1f5f9; font-family: system-ui, sans-serif; }
-        .hunter-card { background: linear-gradient(145deg, #1e293b, #0f172a); border: 1px solid #334155; border-radius: 16px; }
-        .accent-emerald { border-left: 4px solid #10b981; }
-        .accent-amber { border-left: 4px solid #f59e0b; }
+        body { background-color: #0b1121; color: #f1f5f9; font-family: system-ui, sans-serif; }
+        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; }
+        .glow-text-amber { text-shadow: 0 0 10px rgba(245, 158, 11, 0.5); }
+        .glow-text-emerald { text-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
     </style>
 </head>
-<body class="p-4 pb-20">
-    <div class="max-w-md mx-auto space-y-5">
+<body class="p-4 pb-12">
+    <div class="max-w-md mx-auto space-y-6">
         
-        <div class="flex justify-between items-end">
+        <div class="flex justify-between items-end px-2">
             <div>
-                <h1 class="text-3xl font-black italic tracking-tighter text-white">HUNTER V1.1</h1>
-                <p class="text-[10px] text-emerald-400 font-bold uppercase tracking-widest">Strategy: B+ Plan / 442 Ratio</p>
+                <h1 class="text-3xl font-black italic tracking-tighter text-white">HUNTER V7.2</h1>
+                <p class="text-[10px] text-emerald-400 font-bold uppercase tracking-widest">Dynamic Rebalance System</p>
             </div>
             <div class="text-right">
-                <p class="text-[10px] text-slate-500 font-bold">2026 FEB 11</p>
-                <div id="status_tag" class="text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold">等待指令</div>
+                <p id="live_date" class="text-[10px] text-slate-500 font-bold">2026 / 02 / 11</p>
+                <div id="status_tag" class="text-[9px] px-2 py-0.5 rounded-full font-black uppercase"></div>
             </div>
         </div>
 
-        <div class="hunter-card p-4 flex flex-col items-center">
-            <h3 class="text-xs font-bold text-slate-400 mb-2 self-start uppercase">Asset Distribution (%)</h3>
-            <div class="w-48 h-48">
+        <div class="glass-card p-6 shadow-2xl">
+            <div class="relative w-48 h-48 mx-auto">
                 <canvas id="assetChart"></canvas>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                    <p class="text-[10px] text-slate-500 font-bold">TOTAL ASSET</p>
+                    <p id="total_val" class="text-xl font-black text-white">$---</p>
+                </div>
             </div>
-            <div id="chart_legend" class="grid grid-cols-3 gap-4 mt-4 w-full text-[10px] text-center">
+            <div id="chart_legend" class="grid grid-cols-3 gap-2 mt-6"></div>
+        </div>
+
+        <div id="instruction_card" class="glass-card p-6 border-l-4">
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="ins_title" class="text-lg font-black italic">指令計算中...</h2>
+                <div class="flex items-center gap-2 bg-slate-900/50 px-2 py-1 rounded-xl">
+                    <input type="checkbox" id="paid_toggle" onchange="refreshEngine()" class="w-4 h-4 accent-emerald-500">
+                    <label for="paid_toggle" class="text-[10px] font-bold text-slate-400">已投入 2.5W</label>
+                </div>
+            </div>
+            
+            <div id="ins_body" class="space-y-3">
                 </div>
         </div>
 
-        <div id="advice_card" class="hunter-card p-5 accent-amber">
-            <div class="flex justify-between items-center mb-3">
-                <h2 class="text-lg font-black text-amber-400 italic">智能執行建議</h2>
-                <div class="flex items-center gap-2">
-                    <input type="checkbox" id="paid_check" onchange="refreshAll()" class="w-5 h-5 accent-emerald-500">
-                    <label class="text-[10px] font-bold text-slate-400">已入金 2.5萬</label>
-                </div>
-            </div>
-            <div id="advice_content" class="space-y-3">
-                </div>
-        </div>
-
-        <div class="hunter-card p-4 border-dashed border-slate-700">
-            <h3 class="text-xs font-bold text-blue-400 mb-3 uppercase tracking-widest">獵人子彈第一梯隊 (00865B)</h3>
-            <div class="grid grid-cols-2 gap-2 text-[10px]">
-                <div class="bg-slate-900/50 p-2 rounded">跌 5%: 賣 3萬債 → 662</div>
-                <div class="bg-slate-900/50 p-2 rounded">跌 10%: 賣 5萬債 → 662</div>
-                <div class="bg-slate-900/50 p-2 rounded text-blue-300">跌 15%: 賣 7萬債 → 631L</div>
-                <div class="bg-slate-900/50 p-2 rounded text-rose-400 font-bold">跌 20%: 賣 10萬債 → 631L</div>
+        <div class="glass-card p-6 border-t border-white/5">
+            <h3 class="text-xs font-black text-blue-400 mb-4 uppercase">B+ Plan 獵人開火點</h3>
+            <div class="space-y-2 text-[11px]">
+                <div class="flex justify-between"><span>00662 跌 5% / 10%</span><span class="text-slate-300">加碼 00662</span></div>
+                <div class="flex justify-between font-bold text-rose-400"><span>00662 跌 15% / 20%</span><span>全力加碼 00631L</span></div>
             </div>
         </div>
 
-        <details class="text-slate-500">
-            <summary class="text-[10px] cursor-pointer">調整資產基礎數據</summary>
-            <div class="p-2 space-y-2">
-                <input type="number" id="v_662" value="200000" class="w-full bg-slate-800 text-xs p-1 rounded" placeholder="00662 市值">
-                <input type="number" id="v_631" value="200000" class="w-full bg-slate-800 text-xs p-1 rounded" placeholder="00631L 市值">
-                <input type="number" id="v_cash" value="185000" class="w-full bg-slate-800 text-xs p-1 rounded" placeholder="現有現金">
-                <button onclick="refreshAll()" class="w-full bg-blue-600 text-white text-xs p-1 rounded">更新數據</button>
+        <details class="group px-2">
+            <summary class="text-[10px] text-slate-600 cursor-pointer font-bold text-center list-none">── 修改當前市值 ──</summary>
+            <div class="pt-4 space-y-3">
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="text-[10px] text-slate-500">00662 市值</label>
+                        <input type="number" id="v_662" value="200000" class="w-full bg-slate-800 p-2 rounded-lg text-xs font-mono">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] text-slate-500">00631L 市值</label>
+                        <input type="number" id="v_631" value="200000" class="w-full bg-slate-800 p-2 rounded-lg text-xs font-mono">
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] text-slate-500">現金 + 00865B (子彈總水位)</label>
+                    <input type="number" id="v_cash" value="185000" class="w-full bg-slate-800 p-2 rounded-lg text-xs font-mono">
+                </div>
+                <button onclick="refreshEngine()" class="w-full py-2 rounded-lg bg-blue-600 text-[10px] font-black uppercase">更新數據並重新計算</button>
             </div>
         </details>
-
     </div>
 
     <script>
         let myChart;
+        const MONTHLY_SUPPLY = 25000;
 
-        function refreshAll() {
-            // 1. 取得最新數據
+        function refreshEngine() {
             const v662 = parseFloat(document.getElementById('v_662').value);
             const v631 = parseFloat(document.getElementById('v_631').value);
             const vCash = parseFloat(document.getElementById('v_cash').value);
-            const isPaid = document.getElementById('paid_check').checked;
+            const isPaid = document.getElementById('paid_toggle').checked;
             
-            const total = v662 + v631 + vCash;
+            const currentTotal = v662 + v631 + vCash;
+            const targetTotal = currentTotal + MONTHLY_SUPPLY;
             
-            // 2. 更新圓餅圖
-            updateChart(v662, v631, vCash);
+            // 4:4:2 目標市值
+            const target662 = targetTotal * 0.4;
+            const target631 = targetTotal * 0.4;
+            const targetCash = targetTotal * 0.2;
 
-            // 3. 智能建議邏輯
-            const adviceContent = document.getElementById('advice_content');
+            // 計算缺口 (理想 - 現有)
+            let diff662 = Math.max(0, target662 - v662);
+            let diff631 = Math.max(0, target631 - v631);
+            let diffCash = Math.max(0, targetCash - vCash);
+
+            // 按比例分配這 2.5 萬到缺口中
+            const totalDiff = diff662 + diff631 + diffCash;
+            const alloc662 = Math.round((diff662 / totalDiff) * MONTHLY_SUPPLY);
+            const alloc631 = Math.round((diff631 / totalDiff) * MONTHLY_SUPPLY);
+            const allocCash = MONTHLY_SUPPLY - alloc662 - alloc631;
+
+            localStorage.setItem('hunter_v7_paid', isPaid);
+            updateChart(v662, v631, vCash);
+            document.getElementById('total_val').innerText = `$${(currentTotal/10000).toFixed(1)}萬`;
+
+            const insCard = document.getElementById('instruction_card');
+            const insTitle = document.getElementById('ins_title');
+            const insBody = document.getElementById('ins_body');
             const statusTag = document.getElementById('status_tag');
-            const adviceCard = document.getElementById('advice_card');
 
             if (!isPaid) {
-                // 情境：本月尚未補給
-                statusTag.innerText = "等待入金";
-                statusTag.className = "text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold animate-pulse";
-                adviceCard.className = "hunter-card p-5 accent-amber shadow-lg shadow-amber-500/10";
+                statusTag.innerText = "再平衡補給中";
+                statusTag.className = "text-[9px] px-2 py-0.5 rounded-full font-black bg-amber-500/20 text-amber-500 animate-pulse";
+                insCard.style.borderColor = "#f59e0b";
+                insTitle.innerText = "動態再平衡指令";
+                insTitle.className = "text-lg font-black italic text-amber-500 glow-text-amber";
                 
-                // 4:4:2 分配邏輯 (25,000)
-                adviceContent.innerHTML = `
-                    <div class="text-xs text-amber-200 font-bold mb-2">● 今日 11 號指令：執行每月 $25,000 補給</div>
+                insBody.innerHTML = `
+                    <p class="text-[10px] text-slate-400 mb-2 italic">依據 4:4:2 目標自動校準入金金額：</p>
                     <div class="space-y-2">
-                        <div class="flex justify-between bg-slate-900/80 p-3 rounded border border-amber-500/30">
-                            <span class="text-xs">00662 買入 (40%)</span>
-                            <span class="font-mono text-white">$10,000</span>
+                        <div class="flex justify-between bg-white/5 p-3 rounded-xl border border-white/5">
+                            <span class="text-slate-400 text-xs">00662 (填補)</span>
+                            <span class="font-mono text-white font-bold">$${alloc662.toLocaleString()}</span>
                         </div>
-                        <div class="flex justify-between bg-slate-900/80 p-3 rounded border border-amber-500/30">
-                            <span class="text-xs">00631L 買入 (40%)</span>
-                            <span class="font-mono text-white">$10,000</span>
+                        <div class="flex justify-between bg-white/5 p-3 rounded-xl border border-white/5">
+                            <span class="text-slate-400 text-xs">00631L (填補)</span>
+                            <span class="font-mono text-white font-bold">$${alloc631.toLocaleString()}</span>
                         </div>
-                        <div class="flex justify-between bg-slate-900/80 p-3 rounded border border-amber-500/30">
-                            <span class="text-xs">00865B 買入 (20%)</span>
-                            <span class="font-mono text-white">$5,000</span>
+                        <div class="flex justify-between bg-white/5 p-3 rounded-xl border border-white/5">
+                            <span class="text-slate-400 text-xs">00865B (子彈)</span>
+                            <span class="font-mono text-white font-bold">$${allocCash.toLocaleString()}</span>
                         </div>
                     </div>
-                    <p class="text-[10px] text-slate-400 italic">※ 目前現金充足 ($${vCash.toLocaleString()})，請直接從現金撥款投入。</p>
                 `;
             } else {
-                // 情境：本月已補給 -> 進入診斷模式
                 statusTag.innerText = "獵人待命";
-                statusTag.className = "text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold";
-                adviceCard.className = "hunter-card p-5 accent-emerald";
-                
-                // 檢查 00865B (獵人子彈) 缺口
-                // 1/23 數據中 00865B 為 0，而目標是 20%。
-                const bGoal = total * 0.2;
-                adviceContent.innerHTML = `
-                    <div class="text-xs text-emerald-400 font-bold mb-2">● 狀態分析：補給已完成，進入獵人待命</div>
-                    <div class="p-3 bg-slate-900/50 rounded border border-slate-700">
-                        <p class="text-[11px] text-slate-300">當前 00865B (子彈位) 比例過低，建議將剩餘現金 $${vCash.toLocaleString()} 逐步轉入 00865B 債券，以備大跌開火。</p>
+                statusTag.className = "text-[9px] px-2 py-0.5 rounded-full font-black bg-emerald-500/20 text-emerald-400";
+                insCard.style.borderColor = "#10b981";
+                insTitle.innerText = "策略：獵人待命";
+                insTitle.className = "text-lg font-black italic text-emerald-500 glow-text-emerald";
+                insBody.innerHTML = `
+                    <div class="p-4 bg-emerald-500/5 rounded-xl border border-emerald-500/10 text-center">
+                        <p class="text-emerald-400 font-bold text-xs">本月動態補給已完成 ✅</p>
+                        <p class="text-[10px] text-slate-500 mt-2 italic font-mono">"現有資產已趨向平衡，靜待獵人訊號"</p>
                     </div>
                 `;
             }
@@ -135,37 +160,32 @@
 
         function updateChart(v1, v2, v3) {
             const ctx = document.getElementById('assetChart').getContext('2d');
-            const data = [v1, v2, v3];
-            
+            const total = v1 + v2 + v3;
             if (myChart) myChart.destroy();
-            
             myChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['00662', '00631L', '現金/債'],
                     datasets: [{
-                        data: data,
+                        data: [v1, v2, v3],
                         backgroundColor: ['#38bdf8', '#818cf8', '#10b981'],
-                        borderColor: '#020617',
-                        borderWidth: 4,
-                        hoverOffset: 4
+                        borderWidth: 0
                     }]
                 },
-                options: {
-                    plugins: { legend: { display: false } },
-                    cutout: '70%'
-                }
+                options: { cutout: '85%', plugins: { legend: { display: false } } }
             });
 
-            const total = v1 + v2 + v3;
             document.getElementById('chart_legend').innerHTML = `
-                <div><p class="text-sky-400 font-black">${((v1/total)*100).toFixed(1)}%</p><p>00662</p></div>
-                <div><p class="text-indigo-400 font-black">${((v2/total)*100).toFixed(1)}%</p><p>00631L</p></div>
-                <div><p class="text-emerald-400 font-black">${((v3/total)*100).toFixed(1)}%</p><p>現金/債</p></div>
+                <div class="text-center"><p class="text-[12px] font-black text-sky-400">${((v1/total)*100).toFixed(0)}%</p><p class="text-[8px] text-slate-500 font-bold">662</p></div>
+                <div class="text-center"><p class="text-[12px] font-black text-indigo-400">${((v2/total)*100).toFixed(0)}%</p><p class="text-[8px] text-slate-500 font-bold">631L</p></div>
+                <div class="text-center"><p class="text-[12px] font-black text-emerald-400">${((v3/total)*100).toFixed(0)}%</p><p class="text-[8px] text-slate-500 font-bold">CASH</p></div>
             `;
         }
 
-        window.onload = refreshAll;
+        window.onload = () => {
+            const savedPaid = localStorage.getItem('hunter_v7_paid') === 'true';
+            document.getElementById('paid_toggle').checked = savedPaid;
+            refreshEngine();
+        };
     </script>
 </body>
 </html>
