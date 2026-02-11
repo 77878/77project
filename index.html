@@ -2,220 +2,122 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    
-    <title>投資戰鬥機 V7.0</title>
-
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon.png">
-    <link rel="icon" type="image/png" href="icon.png">
-    <meta name="theme-color" content="#0b1120">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>獵人投資戰情室 V1.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').then(reg => {
-                    reg.onupdatefound = () => {
-                        const installingWorker = reg.installing;
-                        installingWorker.onstatechange = () => {
-                            if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                window.location.reload();
-                            }
-                        };
-                    };
-                }).catch(err => console.log('SW Error:', err));
-            });
-        }
-    </script>
-    
     <style>
-        body { background-color: #0b1120; color: #f1f5f9; font-family: system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
-        .card { background-color: #1e293b; border-radius: 20px; padding: 1.25rem; border: 1px solid #334155; }
-        input { 
-            background: #0f172a; border: 1px solid #475569; border-radius: 12px; padding: 10px; 
-            color: #38bdf8; width: 100%; text-align: right; font-weight: 800; font-size: 1.1rem; 
-        }
-        .stat-label { font-size: 0.65rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; }
-        .gap-red { color: #f87171; font-weight: 900; } 
-        .gap-green { color: #4ade80; font-weight: 900; }
-        .action-box { border-radius: 12px; padding: 12px; background: rgba(56, 189, 248, 0.1); border-left: 4px solid #38bdf8; }
+        body { background-color: #020617; color: #f1f5f9; font-family: system-ui, sans-serif; }
+        .hunter-card { background: linear-gradient(145deg, #1e293b, #0f172a); border: 1px solid #334155; border-radius: 16px; }
+        .accent-glow { box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); }
+        .status-tag { font-size: 10px; padding: 2px 8px; border-radius: 999px; font-weight: 800; }
     </style>
 </head>
-<body class="p-4 pb-12 text-sm">
-    <div class="max-w-md mx-auto space-y-4">
+<body class="p-4">
+    <div class="max-w-md mx-auto space-y-6">
         
-        <div class="card space-y-4">
-            <div class="flex items-center gap-4">
-                <div class="relative" style="width: 130px; height: 130px; flex-shrink: 0;">
-                    <canvas id="assetChart"></canvas>
+        <div class="flex justify-between items-center py-2">
+            <div>
+                <h1 class="text-2xl font-black italic tracking-tighter text-white">HUNTER LOG</h1>
+                <p id="today_display" class="text-xs text-slate-500 font-bold uppercase tracking-widest"></p>
+            </div>
+            <div id="main_status" class="status-tag bg-emerald-500/20 text-emerald-400">已就緒</div>
+        </div>
+
+        <div class="hunter-card p-5 accent-glow border-emerald-500/30">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h2 class="text-lg font-bold text-emerald-400">每月補給指令</h2>
+                    <p class="text-[10px] text-slate-400">發薪補給：$25,000 / 月 (4:4:2)</p>
                 </div>
-                <div class="flex-1 min-w-0">
-                    <p class="stat-label">總資產淨值</p>
-                    <p id="total_val" class="text-2xl font-black text-white mb-2 truncate">-- 萬</p>
-                    
-                    <div id="gap_analysis" class="grid grid-cols-3 gap-1 border-y border-slate-700/50 py-2 my-2 text-center">
-                    </div>
+                <input type="checkbox" id="paid_toggle" onchange="updateUI()" class="w-6 h-6 accent-emerald-500 rounded-lg cursor-pointer">
+            </div>
 
-                    <div class="flex justify-between items-center px-1">
-                        <div class="flex gap-2">
-                            <div><p class="stat-label text-blue-400">Beta</p><p id="q_beta" class="text-[11px] font-bold">--</p></div>
-                            <div><p class="stat-label text-indigo-400">Sharpe</p><p id="q_sharpe" class="text-[11px] font-bold">--</p></div>
-                        </div>
-                        <div class="text-right">
-                            <p class="stat-label text-orange-400">平衡倒數</p>
-                            <p id="rebalance_timer" class="text-[11px] font-bold text-white">--</p>
-                        </div>
-                    </div>
+            <div id="instruction_box" class="space-y-3">
+                </div>
+        </div>
+
+        <div class="hunter-card p-5 border-blue-500/30">
+            <h2 class="text-lg font-bold text-blue-400 mb-3">獵人加碼準則 (00662)</h2>
+            <div class="space-y-2">
+                <div class="flex justify-between text-xs border-b border-slate-800 pb-1">
+                    <span class="text-slate-400">跌 5%</span>
+                    <span class="text-white font-mono">賣 3萬債 → 00662</span>
+                </div>
+                <div class="flex justify-between text-xs border-b border-slate-800 pb-1">
+                    <span class="text-slate-400">跌 10%</span>
+                    <span class="text-white font-mono">賣 5萬債 → 00662</span>
+                </div>
+                <div class="flex justify-between text-xs border-b border-slate-800 pb-1">
+                    <span class="text-slate-400">跌 15%</span>
+                    <span class="text-white font-mono">賣 7萬債 → 00631L</span>
+                </div>
+                <div class="flex justify-between text-xs text-rose-400 font-bold">
+                    <span>跌 20%</span>
+                    <span class="font-mono">賣 10萬債 → 00631L</span>
                 </div>
             </div>
+            <p class="text-[9px] text-slate-500 mt-4 italic">※ 買入後務必進行質押回補，目標維持率 250%</p>
         </div>
 
-        <div class="card border-l-4 border-l-emerald-500 py-3">
-            <div class="flex justify-between items-center mb-2">
-                <h2 class="text-[10px] font-black text-emerald-400 uppercase italic tracking-wider">智能執行建議</h2>
-                <span id="supply_status" class="text-[9px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full border border-slate-700">自動掃描中</span>
+        <div class="grid grid-cols-2 gap-4">
+            <div class="hunter-card p-3 text-center">
+                <p class="text-[10px] text-slate-500 uppercase">總資產</p>
+                <p class="text-lg font-black text-white">$124.5萬</p>
             </div>
-            <div id="instruction_content" class="text-[13px] font-medium leading-relaxed"></div>
-        </div>
-
-        <div class="card bg-indigo-900/10 border-indigo-500/30">
-            <span class="stat-label text-indigo-400 font-black">💰 額外獎金投入 (萬元)</span>
-            <input type="number" id="v_bonus" value="0" class="mt-1" style="color:#a855f7; border-color:#a855f7;" oninput="run()">
-        </div>
-
-        <div class="card space-y-4">
-            <div><span class="stat-label text-blue-300">航空母艦 (006208)</span><input type="number" id="v_base" value="66" oninput="run()"></div>
-            <div class="grid grid-cols-2 gap-4">
-                <div><span class="stat-label">原型 (00662)</span><input type="number" id="v_etf" value="20" oninput="run()"></div>
-                <div><span class="stat-label">槓桿 (00631L)</span><input type="number" id="v_lev" value="20" oninput="run()"></div>
-                <div><span class="stat-label">債券 (865B)</span><input type="number" id="v_cash" value="0" oninput="run()"></div>
-                <div><span class="stat-label">現金部位</span><input type="number" id="v_pocket" value="18.5" oninput="run()"></div>
+            <div class="hunter-card p-3 text-center">
+                <p class="text-[10px] text-slate-500 uppercase">維持率目標</p>
+                <p class="text-lg font-black text-blue-400">250%</p>
             </div>
         </div>
 
-        <div class="card bg-slate-900/50">
-            <div class="grid grid-cols-2 gap-4 mb-4">
-                <div><span class="stat-label">質押市值</span><input type="number" id="m_pledge" value="20" oninput="run()"></div>
-                <div><span class="stat-label">借款金額</span><input type="number" id="m_loan" value="0" oninput="run()"></div>
-            </div>
-            <div class="bg-black/40 p-4 rounded-xl flex justify-between items-center border border-slate-800">
-                <span class="stat-label m-0">維持率</span>
-                <span id="m_rate_display" class="text-3xl font-black text-emerald-400">--%</span>
-            </div>
-            <input type="range" id="v_drop" min="0" max="40" value="0" class="w-full mt-6" oninput="run()">
-            <p id="drop_text" class="text-center text-[10px] text-slate-500 mt-2 font-bold uppercase">模擬跌幅: 0%</p>
-        </div>
     </div>
 
     <script>
-        let myChart;
+        function updateUI() {
+            const isPaid = document.getElementById('paid_toggle').checked;
+            const box = document.getElementById('instruction_box');
+            const mainStatus = document.getElementById('main_status');
+            const today = new Date();
+            const dateStr = `${today.getFullYear()} FEB ${today.getDate()}`;
+            document.getElementById('today_display').innerText = dateStr;
 
-        function run() {
-            try {
-                const vB = parseFloat(document.getElementById('v_base').value) || 0;
-                const vE = parseFloat(document.getElementById('v_etf').value) || 0;
-                const vL = parseFloat(document.getElementById('v_lev').value) || 0;
-                const vC = parseFloat(document.getElementById('v_cash').value) || 0;
-                const vP = parseFloat(document.getElementById('v_pocket').value) || 0;
-                const mL = parseFloat(document.getElementById('m_loan').value) || 0;
-                const mP = parseFloat(document.getElementById('m_pledge').value) || 0;
-                const drop = parseFloat(document.getElementById('v_drop').value) || 0;
-                const bonus = parseFloat(document.getElementById('v_bonus').value) || 0;
+            localStorage.setItem('hunter_paid_2026_02', isPaid);
 
-                const total = vB + vE + vL + vC + vP;
-                const battleTotal = vE + vL + vC;
-                document.getElementById('total_val').innerText = total.toFixed(1) + " 萬";
-
-                const mRate = mL > 0 ? ((mP * (1 - drop/100)) / mL) * 100 : 999;
-                const rateDisp = document.getElementById('m_rate_display');
-                rateDisp.innerText = mL > 0 ? mRate.toFixed(0) + "%" : "N/A";
-                rateDisp.className = `text-3xl font-black ${mRate < 140 ? 'text-red-500 animate-bounce' : mRate < 166 ? 'text-yellow-500' : 'text-emerald-400'}`;
-
-                const tE = battleTotal * 0.4, tL = battleTotal * 0.4, tC = battleTotal * 0.2;
-                const gE = vE - tE, gL = vL - tL, gC = vC - tC;
-                const formatGap = (v) => v > 0 ? `<span class="gap-red">+${v.toFixed(1)}</span>` : `<span class="gap-green">${v.toFixed(1)}</span>`;
-                
-                document.getElementById('gap_analysis').innerHTML = `
-                    <div><p class='stat-label text-[8px]'>原型</p>${formatGap(gE)}</div>
-                    <div><p class='stat-label text-[8px]'>槓桿</p>${formatGap(gL)}</div>
-                    <div><p class='stat-label text-[8px]'>債券</p>${formatGap(gC)}</div>`;
-
-                const insEl = document.getElementById('instruction_content');
-                let tips = "";
-                const today = new Date().getDate();
-
-                if (mRate < 166 && mL > 0) {
-                    tips = `<div class="action-box border-red-500 text-red-400 font-bold">🚨 優先補救維持率！建議補金或縮減借款。</div>`;
-                    document.getElementById('supply_status').innerText = "風險警告";
-                } else if (drop >= 20) {
-                    tips = `<div class="action-box border-yellow-500 text-yellow-500 font-bold">🎯 獵人準則：大跌達標！動用現金進攻槓桿部位。</div>`;
-                    document.getElementById('supply_status').innerText = "進攻模式";
-                } else if (bonus > 0) {
-                    tips = `<div class="action-box border-indigo-500 text-indigo-300 font-bold">🎁 獎金分配建議：<br>原型 +${(bonus*0.4).toFixed(1)} | 槓桿 +${(bonus*0.4).toFixed(1)} | 債券 +${(bonus*0.2).toFixed(1)}</div>`;
-                    document.getElementById('supply_status').innerText = "獎金模式";
-                } else {
-                    document.getElementById('supply_status').innerText = today >= 11 ? "配置平衡中" : "待11號入金";
-                    tips = `<p class="text-slate-400 italic text-center py-1">目前戰鬥部位合計 ${battleTotal.toFixed(1)} 萬，比例運行良好。</p>`;
-                }
-                insEl.innerHTML = tips;
-
-                const wB = total > 0 ? vB/total : 0, wE = total > 0 ? vE/total : 0, wL = total > 0 ? vL/total : 0, wC = total > 0 ? vC/total : 0;
-                document.getElementById('q_beta').innerText = (wB*1 + wE*1.1 + wL*2.1).toFixed(2);
-                document.getElementById('q_sharpe').innerText = (wB*0.6 + wE*0.7 + wL*0.5 + wC*0.4).toFixed(2);
-
-                const now = new Date();
-                const target = now > new Date(now.getFullYear(), 5, 30) ? new Date(now.getFullYear(), 11, 31) : new Date(now.getFullYear(), 5, 30);
-                document.getElementById('rebalance_timer').innerText = Math.ceil((target - now) / 86400000) + "天";
-
-                if (myChart) {
-                    myChart.data.datasets[0].data = [vE, vL, vC];
-                    myChart.update();
-                }
-                localStorage.setItem('invest_v7_final', JSON.stringify({vB,vE,vL,vC,vP,mL,mP,drop,bonus}));
-            } catch (e) { console.error(e); }
+            if (isPaid) {
+                mainStatus.innerText = "獵人待命中";
+                mainStatus.className = "status-tag bg-emerald-500/20 text-emerald-400";
+                box.innerHTML = `
+                    <div class="bg-slate-900/50 p-4 rounded-xl text-center border border-emerald-500/20">
+                        <p class="text-emerald-400 text-sm font-bold">本月補給已達成 ✅</p>
+                        <p class="text-[10px] text-slate-500 mt-1 font-mono italic">"靜待 00662 進入獵人區間"</p>
+                    </div>
+                `;
+            } else {
+                mainStatus.innerText = "等待入金指令";
+                mainStatus.className = "status-tag bg-amber-500/20 text-amber-400 animate-pulse";
+                box.innerHTML = `
+                    <div class="grid grid-cols-1 gap-2">
+                        <div class="flex justify-between items-center bg-slate-900/80 p-3 rounded-lg border border-slate-700">
+                            <span class="text-xs font-bold">00662 (40%)</span>
+                            <span class="text-emerald-400 font-black font-mono">$10,000</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-slate-900/80 p-3 rounded-lg border border-slate-700">
+                            <span class="text-xs font-bold">00631L (40%)</span>
+                            <span class="text-emerald-400 font-black font-mono">$10,000</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-slate-900/80 p-3 rounded-lg border border-slate-700">
+                            <span class="text-xs font-bold">00865B (20%)</span>
+                            <span class="text-emerald-400 font-black font-mono">$5,000</span>
+                        </div>
+                    </div>
+                `;
+            }
         }
 
         window.onload = () => {
-            const ctx = document.getElementById('assetChart');
-            myChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: { 
-                    labels: ['原型', '槓桿', '債券'],
-                    datasets: [{ data: [1, 1, 1], backgroundColor: ['#3b82f6', '#a855f7', '#10b981'], borderWidth: 0 }] 
-                },
-                options: { 
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '70%', 
-                    plugins: { 
-                        legend: { 
-                            display: true, 
-                            position: 'bottom',
-                            labels: { color: '#94a3b8', font: { size: 9 }, boxWidth: 8, padding: 4 }
-                        } 
-                    } 
-                }
-            });
-            const saved = localStorage.getItem('invest_v7_final');
-            if (saved) {
-                const d = JSON.parse(saved);
-                document.getElementById('v_base').value = d.vB || 66;
-                document.getElementById('v_etf').value = d.vE || 20;
-                document.getElementById('v_lev').value = d.vL || 20;
-                document.getElementById('v_cash').value = d.vC || 0;
-                document.getElementById('v_pocket').value = d.vP || 18.5;
-                document.getElementById('m_loan').value = d.mL || 0;
-                document.getElementById('m_pledge').value = d.mP || 20;
-                document.getElementById('v_drop').value = d.drop || 0;
-                document.getElementById('v_bonus').value = d.bonus || 0;
-            }
-            run();
+            const saved = localStorage.getItem('hunter_paid_2026_02') === 'true';
+            document.getElementById('paid_toggle').checked = saved;
+            updateUI();
         };
     </script>
 </body>
