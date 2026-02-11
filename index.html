@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>獵人戰情室 V7.7 - 終極完全體</title>
+    <title>獵人戰情室 V7.8</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -11,242 +11,185 @@
         .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; }
         .glow-text-emerald { text-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
         .glow-text-rose { text-shadow: 0 0 10px rgba(244, 63, 94, 0.5); }
-        .glow-text-amber { text-shadow: 0 0 10px rgba(245, 158, 11, 0.5); }
         input[type="number"]::-webkit-inner-spin-button { display: none; }
+        input:focus { outline: none; border-color: #3b82f6 !important; }
     </style>
 </head>
-<body class="p-4 pb-20">
+<body class="p-4 pb-10">
     <div class="max-w-md mx-auto space-y-5">
         
-        <div class="flex justify-between items-end px-2">
-            <div>
-                <h1 class="text-3xl font-black italic tracking-tighter text-white uppercase">Hunter V7.7</h1>
-                <p class="text-[10px] text-emerald-400 font-bold uppercase tracking-widest italic">Ultimate Command Center</p>
-            </div>
+        <div class="flex justify-between items-center px-2">
+            <h1 class="text-3xl font-black italic tracking-tighter text-white uppercase">Hunter V7.8</h1>
             <div class="text-right">
-                <p class="text-[10px] text-slate-500 font-bold">2026 / 02 / 11</p>
-                <div id="status_tag" class="text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter"></div>
+                <p class="text-[10px] text-slate-500 font-bold uppercase">Dynamic Monitoring</p>
+                <div id="m_rate_badge" class="text-[9px] px-2 py-0.5 rounded-full font-black bg-emerald-500/20 text-emerald-400">SAFE</div>
             </div>
         </div>
 
-        <div class="glass-card p-6 shadow-2xl relative border-t-4 border-blue-500/50">
+        <div class="glass-card p-6 shadow-2xl relative">
             <div class="flex justify-between items-center mb-6">
                 <div class="w-28 h-28 relative">
                     <canvas id="assetChart"></canvas>
                     <div class="absolute inset-0 flex flex-col items-center justify-center">
-                        <p id="total_val" class="text-[10px] font-black text-white">$---</p>
+                        <p class="text-[8px] text-slate-500 font-bold">戰術總額</p>
+                        <p id="tactical_total" class="text-[11px] font-black text-white">$---</p>
                     </div>
                 </div>
-                <div class="text-right space-y-1">
-                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">聯防維持率 (現有+662)</p>
-                    <p id="m_rate" class="text-4xl font-black italic leading-none">---%</p>
-                    <div class="flex flex-col text-[9px] font-bold mt-2">
-                        <span class="text-slate-400 italic text-right text-blue-300">抵押市值: <span id="collateral_val" class="text-white">$---</span></span>
-                    </div>
+                <div class="text-right">
+                    <p class="text-[10px] text-slate-500 font-bold uppercase">聯防維持率</p>
+                    <p id="m_rate" class="text-5xl font-black italic leading-none glow-text-emerald text-emerald-400">---%</p>
+                    <p class="text-[9px] text-slate-400 font-bold mt-2">擔保品市值: <span id="collateral_val" class="text-white">$---</span></p>
                 </div>
             </div>
-            <div id="chart_legend" class="grid grid-cols-4 gap-1 border-t border-white/5 pt-4"></div>
+            <div id="chart_legend" class="grid grid-cols-3 gap-2 border-t border-white/5 pt-4"></div>
         </div>
 
-        <div id="instruction_card" class="glass-card p-5 border-l-4">
-            <div class="flex justify-between items-center mb-3">
-                <h2 id="ins_title" class="text-lg font-black italic">智能診斷建議</h2>
-                <div class="flex items-center gap-2 bg-slate-900/50 px-2 py-1 rounded-xl">
-                    <input type="checkbox" id="paid_toggle" onchange="refreshEngine()" class="w-4 h-4 accent-emerald-500 cursor-pointer">
-                    <label for="paid_toggle" class="text-[10px] font-bold text-slate-400 cursor-pointer uppercase">2.5W已入金</label>
-                </div>
+        <div class="glass-card p-5">
+            <h3 class="text-xs font-black text-blue-400 uppercase tracking-widest mb-4 text-center">擔保品壓力測試 (現有 + 00662)</h3>
+            <div class="overflow-hidden rounded-xl border border-white/5 bg-slate-900/50">
+                <table class="w-full text-center text-[11px]">
+                    <thead class="bg-white/5 text-slate-500 uppercase font-bold">
+                        <tr>
+                            <th class="py-2">擔保品跌幅</th>
+                            <th>預估市值</th>
+                            <th>預估維持率</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stress_table" class="font-mono">
+                        </tbody>
+                </table>
             </div>
-            <div id="ins_body" class="space-y-3">
-                </div>
         </div>
 
-        <div class="glass-card p-5 border-l-4 border-emerald-500">
-            <div class="flex justify-between items-center mb-3">
-                <h3 class="text-xs font-black text-emerald-400 uppercase tracking-widest">額外獎金分配 (4:4:2)</h3>
-                <input type="number" id="bonus_input" oninput="calculateBonus()" class="w-24 bg-slate-900 border border-emerald-500/30 rounded px-2 py-1 text-xs font-mono text-emerald-400 text-center" placeholder="輸入金額">
+        <div class="grid grid-cols-2 gap-3">
+            <div id="instruction_card" class="glass-card p-4 border-l-4 border-amber-500">
+                <div class="flex items-center gap-2 mb-2">
+                    <input type="checkbox" id="paid_toggle" onchange="refreshEngine()" class="w-3 h-3 accent-emerald-500">
+                    <label class="text-[10px] font-black text-slate-400">2.5W 已入金</label>
+                </div>
+                <div id="ins_body" class="text-[10px] font-bold text-white"></div>
             </div>
-            <div id="bonus_result" class="grid grid-cols-3 gap-2 hidden">
-                <div class="bg-slate-900/50 p-2 rounded-xl text-center border border-white/5">
-                    <p class="text-[8px] text-slate-500 font-bold">00662</p>
-                    <p id="b_662" class="text-[11px] font-black text-white">$0</p>
-                </div>
-                <div class="bg-slate-900/50 p-2 rounded-xl text-center border border-white/5">
-                    <p class="text-[8px] text-slate-500 font-bold">00631L</p>
-                    <p id="b_631" class="text-[11px] font-black text-white">$0</p>
-                </div>
-                <div class="bg-slate-900/50 p-2 rounded-xl text-center border border-white/5">
-                    <p class="text-[8px] text-slate-500 font-bold">子彈</p>
-                    <p id="b_cash" class="text-[11px] font-black text-white">$0</p>
-                </div>
+            <div class="glass-card p-4 border-l-4 border-emerald-500">
+                <p class="text-[10px] font-black text-slate-400 mb-2 uppercase">額外獎金分配</p>
+                <input type="number" id="bonus_input" oninput="refreshEngine()" class="w-full bg-slate-900 border border-white/10 rounded px-2 py-1 text-xs text-emerald-400" placeholder="輸入金額...">
+                <div id="bonus_body" class="text-[9px] mt-2 text-slate-400 leading-tight"></div>
             </div>
         </div>
 
         <div class="glass-card p-5 space-y-4">
-            <div class="grid grid-cols-2 gap-3">
-                <div class="bg-amber-500/10 p-3 rounded-2xl border border-amber-500/20 text-center">
-                    <p class="text-[9px] text-amber-500/70 font-bold mb-1 uppercase tracking-tighter">警戒線 (240%)</p>
-                    <div class="text-[11px] font-black text-white mb-1">抵押品再跌 <span id="drop_warn_pct">--</span>%</div>
-                    <p id="risk_warn_val" class="text-[8px] font-mono text-slate-500">$---</p>
+            <div class="flex justify-between items-center">
+                <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest italic">戰術數據修正 (即時連動)</h3>
+            </div>
+            <div class="space-y-3">
+                <div class="bg-blue-500/10 p-3 rounded-xl border border-blue-500/20">
+                    <label class="text-[9px] text-blue-400 font-black uppercase block mb-1">當前質押借款金額</label>
+                    <input type="number" id="v_loan" value="300000" oninput="refreshEngine()" class="w-full bg-transparent text-xl font-black font-mono text-white">
                 </div>
-                <div class="bg-rose-500/10 p-3 rounded-2xl border border-rose-500/20 text-center">
-                    <p class="text-[9px] text-rose-500/70 font-bold mb-1 uppercase tracking-tighter">追繳線 (160%)</p>
-                    <div class="text-[11px] font-black text-white mb-1">抵押品再跌 <span id="drop_dead_pct">--</span>%</div>
-                    <p id="risk_dead_val" class="text-[8px] font-mono text-slate-500">$---</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-slate-800/50 p-2 rounded-xl border border-white/5">
+                        <label class="text-[9px] text-slate-500 font-bold block">現有資產</label>
+                        <input type="number" id="v_main" value="660000" oninput="refreshEngine()" class="w-full bg-transparent text-sm font-mono font-bold">
+                    </div>
+                    <div class="bg-slate-800/50 p-2 rounded-xl border border-white/5 text-sky-400">
+                        <label class="text-[9px] text-slate-500 font-bold block">00662</label>
+                        <input type="number" id="v_662" value="200000" oninput="refreshEngine()" class="w-full bg-transparent text-sm font-mono font-bold">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-slate-800/50 p-2 rounded-xl border border-white/5 text-indigo-400">
+                        <label class="text-[9px] text-slate-500 font-bold block">00631L</label>
+                        <input type="number" id="v_631" value="200000" oninput="refreshEngine()" class="w-full bg-transparent text-sm font-mono font-bold">
+                    </div>
+                    <div class="bg-slate-800/50 p-2 rounded-xl border border-white/5 text-emerald-400">
+                        <label class="text-[9px] text-slate-500 font-bold block">類現金</label>
+                        <input type="number" id="v_cash" value="185000" oninput="refreshEngine()" class="w-full bg-transparent text-sm font-mono font-bold">
+                    </div>
                 </div>
             </div>
         </div>
-
-        <details class="group px-2">
-            <summary class="text-[10px] text-slate-600 cursor-pointer font-bold text-center list-none uppercase tracking-widest italic">── 戰術數據修正面板 ──</summary>
-            <div class="pt-4 space-y-4">
-                <div class="bg-blue-500/10 p-4 rounded-2xl border border-blue-500/20">
-                    <label class="text-[10px] text-blue-400 font-black mb-1 block">當前質押借款額 (動態金額)</label>
-                    <input type="number" id="v_loan" value="300000" class="w-full bg-slate-900 p-3 rounded-xl text-lg font-black font-mono text-white border border-blue-500/30">
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="space-y-1">
-                        <label class="text-[9px] text-slate-500 font-bold uppercase italic">現有資產</label>
-                        <input type="number" id="v_main" value="660000" class="w-full bg-slate-800 p-2 rounded-xl text-xs font-mono">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[9px] text-slate-500 font-bold uppercase italic">00662</label>
-                        <input type="number" id="v_662" value="200000" class="w-full bg-slate-800 p-2 rounded-xl text-xs font-mono">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="space-y-1">
-                        <label class="text-[9px] text-slate-500 font-bold uppercase italic">00631L</label>
-                        <input type="number" id="v_631" value="200000" class="w-full bg-slate-800 p-2 rounded-xl text-xs font-mono">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[9px] text-slate-500 font-bold uppercase italic">現金/子彈 (00865B)</label>
-                        <input type="number" id="v_cash" value="185000" class="w-full bg-slate-800 p-2 rounded-xl text-xs font-mono">
-                    </div>
-                </div>
-                <button onclick="refreshEngine()" class="w-full py-4 rounded-2xl bg-blue-600 text-[11px] font-black uppercase tracking-[0.2em] shadow-lg active:scale-95 transition-all">同步全盤戰況數據</button>
-            </div>
-        </details>
     </div>
 
     <script>
         let myChart;
-        const MONTHLY_SUPPLY = 25000;
-
-        function calculateBonus() {
-            const bonus = parseFloat(document.getElementById('bonus_input').value) || 0;
-            const resDiv = document.getElementById('bonus_result');
-            if (bonus > 0) {
-                resDiv.classList.remove('hidden');
-                document.getElementById('b_662').innerText = `$${Math.round(bonus * 0.4).toLocaleString()}`;
-                document.getElementById('b_631').innerText = `$${Math.round(bonus * 0.4).toLocaleString()}`;
-                document.getElementById('b_cash').innerText = `$${Math.round(bonus * 0.2).toLocaleString()}`;
-            } else {
-                resDiv.classList.add('hidden');
-            }
-        }
 
         function refreshEngine() {
             const vLoan = parseFloat(document.getElementById('v_loan').value) || 1;
-            const vMain = parseFloat(document.getElementById('v_main').value);
-            const v662 = parseFloat(document.getElementById('v_662').value);
-            const v631 = parseFloat(document.getElementById('v_631').value);
-            const vCash = parseFloat(document.getElementById('v_cash').value);
+            const vMain = parseFloat(document.getElementById('v_main').value) || 0;
+            const v662 = parseFloat(document.getElementById('v_662').value) || 0;
+            const v631 = parseFloat(document.getElementById('v_631').value) || 0;
+            const vCash = parseFloat(document.getElementById('v_cash').value) || 0;
             const isPaid = document.getElementById('paid_toggle').checked;
-            
-            const collateral = vMain + v662; 
-            const currentTotal = collateral + v631 + vCash;
+            const bonus = parseFloat(document.getElementById('bonus_input').value) || 0;
+
+            const collateral = vMain + v662;
             const mRate = (collateral / vLoan) * 100;
+            const tacticalTotal = v662 + v631 + vCash;
 
-            document.getElementById('m_rate').innerText = mRate.toFixed(0) + '%';
-            document.getElementById('m_rate').className = `text-4xl font-black italic leading-none ${mRate < 180 ? 'text-rose-500 glow-text-rose' : 'text-emerald-400 glow-text-emerald'}`;
+            // 更新維持率
+            const mRateEl = document.getElementById('m_rate');
+            mRateEl.innerText = Math.round(mRate) + '%';
+            mRateEl.className = `text-5xl font-black italic leading-none ${mRate < 170 ? 'text-rose-500 glow-text-rose' : (mRate < 240 ? 'text-amber-500 glow-text-amber' : 'text-emerald-400 glow-text-emerald')}`;
+            document.getElementById('m_rate_badge').innerText = mRate < 170 ? 'DANGER' : (mRate < 240 ? 'WARNING' : 'SAFE');
             document.getElementById('collateral_val').innerText = `$${collateral.toLocaleString()}`;
-            document.getElementById('total_val').innerText = `$${(currentTotal/10000).toFixed(1)}萬`;
+            document.getElementById('tactical_total').innerText = `$${(tacticalTotal/10000).toFixed(1)}萬`;
 
-            // 壓力測試
-            const warnValue = vLoan * 2.4;
-            const deadValue = vLoan * 1.6;
-            document.getElementById('risk_warn_val').innerText = `警戒市值: $${warnValue.toLocaleString()}`;
-            document.getElementById('risk_dead_val').innerText = `斷頭市值: $${deadValue.toLocaleString()}`;
-            document.getElementById('drop_warn_pct').innerText = ((1 - (warnValue / collateral)) * 100).toFixed(1);
-            document.getElementById('drop_dead_pct').innerText = ((1 - (deadValue / collateral)) * 100).toFixed(1);
+            // 更新圓餅圖 (只計 4:4:2)
+            updateChart(v662, v631, vCash);
 
-            // 智能執行建議
-            const insCard = document.getElementById('instruction_card');
+            // 更新指令區
             const insBody = document.getElementById('ins_body');
-            const statusTag = document.getElementById('status_tag');
-            
-            // 計算 2.5W 動態分配
-            const subsetTotal = v662 + v631 + vCash + MONTHLY_SUPPLY;
-            const a662 = Math.round((Math.max(0, subsetTotal * 0.4 - v662) / MONTHLY_SUPPLY) * MONTHLY_SUPPLY); // 簡化展示用邏輯
-            const a631 = Math.round((Math.max(0, subsetTotal * 0.4 - v631) / MONTHLY_SUPPLY) * MONTHLY_SUPPLY);
-            const aCash = MONTHLY_SUPPLY - a662 - a631;
-
-            if (!isPaid) {
-                statusTag.innerText = "補給校準中";
-                statusTag.className = "text-[9px] px-2 py-0.5 rounded-full font-black bg-amber-500/20 text-amber-500 animate-pulse";
-                insCard.style.borderColor = "#f59e0b";
-                insBody.innerHTML = `
-                    <p class="text-[10px] text-amber-400 font-bold uppercase italic mb-1">● 11 號入金指令：執行再平衡補給</p>
-                    <div class="grid grid-cols-3 gap-2">
-                        <div class="bg-white/5 p-2 rounded-lg text-center"><p class="text-[8px] text-slate-500 font-bold uppercase">662</p><p class="text-xs font-black">$${(MONTHLY_SUPPLY*0.4).toLocaleString()}</p></div>
-                        <div class="bg-white/5 p-2 rounded-lg text-center"><p class="text-[8px] text-slate-500 font-bold uppercase">631L</p><p class="text-xs font-black">$${(MONTHLY_SUPPLY*0.4).toLocaleString()}</p></div>
-                        <div class="bg-white/5 p-2 rounded-lg text-center"><p class="text-[8px] text-slate-500 font-bold uppercase">子彈</p><p class="text-xs font-black">$${(MONTHLY_SUPPLY*0.2).toLocaleString()}</p></div>
-                    </div>
-                `;
+            if(!isPaid) {
+                insBody.innerHTML = `本月補給建議：<br><span class="text-sky-400">662: $10,000</span><br><span class="text-indigo-400">631L: $10,000</span><br><span class="text-emerald-400">類現金: $5,000</span>`;
             } else {
-                statusTag.innerText = "獵人待命";
-                statusTag.className = "text-[9px] px-2 py-0.5 rounded-full font-black bg-emerald-500/20 text-emerald-400";
-                insCard.style.borderColor = "#10b981";
-                
-                // 智能建議邏輯
-                let advice = "";
-                if (vCash < currentTotal * 0.15) {
-                    advice = "子彈水位偏低，建議下筆資金優先補充 00865B 以維持獵人威懾力。";
-                } else if (mRate < 250) {
-                    advice = "維持率接近警戒線，請暫緩加碼正二，資金優先回填現有資產或 00662。";
-                } else {
-                    advice = "目前資產分布平衡且維持率安全，進入獵人待命，靜待跌幅 20% 開火訊號。";
-                }
-
-                insBody.innerHTML = `
-                    <div class="p-3 bg-emerald-500/5 rounded-xl border border-emerald-500/10">
-                        <p class="text-[11px] text-emerald-400 font-bold leading-relaxed">${advice}</p>
-                    </div>
-                `;
+                insBody.innerHTML = `<span class="text-emerald-400">✓ 補給已完成</span><br><span class="text-[8px] text-slate-500">待命：00662 跌 20% 加碼</span>`;
             }
 
-            localStorage.setItem('hunter_v77_paid', isPaid);
-            updateChart(vMain, v662, v631, vCash);
+            // 更新獎金分配
+            const bonusBody = document.getElementById('bonus_body');
+            if(bonus > 0) {
+                bonusBody.innerHTML = `662: $${Math.round(bonus*0.4).toLocaleString()}<br>631L: $${Math.round(bonus*0.4).toLocaleString()}<br>類現金: $${Math.round(bonus*0.2).toLocaleString()}`;
+            } else { bonusBody.innerHTML = ""; }
+
+            // 壓力測試矩陣 (回歸經典)
+            const stressTable = document.getElementById('stress_table');
+            const drops = [0.1, 0.2, 0.3, 0.4, 0.5];
+            let tableHTML = "";
+            drops.forEach(d => {
+                const sCollateral = collateral * (1 - d);
+                const sRate = (sCollateral / vLoan) * 100;
+                const rowClass = sRate < 166 ? 'text-rose-500 font-bold bg-rose-500/10' : (sRate < 240 ? 'text-amber-500' : 'text-slate-300');
+                tableHTML += `<tr class="${rowClass} border-b border-white/5">
+                    <td class="py-2">-${Math.round(d*100)}%</td>
+                    <td>$${Math.round(sCollateral).toLocaleString()}</td>
+                    <td>${Math.round(sRate)}%</td>
+                </tr>`;
+            });
+            stressTable.innerHTML = tableHTML;
         }
 
-        function updateChart(v1, v2, v3, v4) {
+        function updateChart(v1, v2, v3) {
             const ctx = document.getElementById('assetChart').getContext('2d');
             if (myChart) myChart.destroy();
             myChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     datasets: [{
-                        data: [v1, v2, v3, v4],
-                        backgroundColor: ['#f8fafc', '#38bdf8', '#818cf8', '#10b981'],
+                        data: [v1, v2, v3],
+                        backgroundColor: ['#38bdf8', '#818cf8', '#10b981'],
                         borderWidth: 0
                     }]
                 },
-                options: { cutout: '82%', plugins: { legend: { display: false } } }
+                options: { cutout: '80%', plugins: { legend: { display: false } } }
             });
-            const t = v1 + v2 + v3 + v4;
+            const t = v1 + v2 + v3;
             document.getElementById('chart_legend').innerHTML = `
-                <div class="text-center"><p class="text-[10px] font-black text-slate-200">${((v1/t)*100).toFixed(0)}%</p><p class="text-[8px] text-slate-600 font-bold uppercase">現有</p></div>
-                <div class="text-center"><p class="text-[10px] font-black text-sky-400">${((v2/t)*100).toFixed(0)}%</p><p class="text-[8px] text-slate-600 font-bold uppercase">662</p></div>
-                <div class="text-center"><p class="text-[10px] font-black text-indigo-400">${((v3/t)*100).toFixed(0)}%</p><p class="text-[8px] text-slate-600 font-bold uppercase">631L</p></div>
-                <div class="text-center"><p class="text-[10px] font-black text-emerald-400">${((v4/t)*100).toFixed(0)}%</p><p class="text-[8px] text-slate-600 font-bold uppercase">子彈</p></div>
+                <div class="text-center text-[10px] text-sky-400 font-black">${Math.round(v1/t*100)}%<br><span class="text-[8px] text-slate-600 font-bold uppercase">662</span></div>
+                <div class="text-center text-[10px] text-indigo-400 font-black">${Math.round(v2/t*100)}%<br><span class="text-[8px] text-slate-600 font-bold uppercase">631L</span></div>
+                <div class="text-center text-[10px] text-emerald-400 font-black">${Math.round(v3/t*100)}%<br><span class="text-[8px] text-slate-600 font-bold uppercase">類現金</span></div>
             `;
         }
 
-        window.onload = () => {
-            const savedPaid = localStorage.getItem('hunter_v77_paid') === 'true';
-            document.getElementById('paid_toggle').checked = savedPaid;
-            refreshEngine();
-        };
+        window.onload = refreshEngine;
     </script>
 </body>
 </html>
