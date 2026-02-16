@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>夏農惡魔計畫 V8.3</title>
+    <title>Shannon's Demon V8.3.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -14,13 +14,18 @@
         .input-flash { animation: flash 0.6s ease; }
         @keyframes flash { 0% { background: rgba(239, 68, 68, 0.3); } 100% { background: transparent; } }
         .hidden { display: none; }
+        /* 鎖定按鈕樣式 */
+        .btn-locked { background-color: #334155 !important; color: #94a3b8 !important; opacity: 0.6; pointer-events: none; cursor: not-allowed; }
     </style>
 </head>
 <body class="p-4">
     <div class="max-w-md mx-auto space-y-4">
         
         <div class="flex justify-between items-center px-2">
-            <h1 class="text-2xl font-black italic text-red-600 tracking-tighter uppercase">Shannon's Demon</h1>
+            <div>
+                <h1 class="text-2xl font-black italic text-red-600 tracking-tighter">Shannon's Demon</h1>
+                <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Precision Rebalance</p>
+            </div>
             <div id="countdown_days" class="text-xs font-mono text-slate-500 bg-white/5 px-2 py-1 rounded-lg">--- Days</div>
         </div>
 
@@ -56,15 +61,15 @@
             </div>
 
             <div class="demon-card p-5 grid grid-cols-1 gap-3">
-                <div class="bg-sky-900/10 p-3 rounded-2xl border border-sky-500/20">
+                <div class="bg-sky-900/10 p-3 rounded-2xl border border-sky-500/20 text-sky-400">
                     <label class="text-[8px] text-sky-500 font-bold uppercase block mb-1">00662 (40%)</label>
                     <input type="number" id="v_662" value="200000" oninput="refreshEngine()" class="w-full bg-transparent text-lg font-black font-mono outline-none">
                 </div>
-                <div class="bg-indigo-900/10 p-3 rounded-2xl border border-indigo-500/20">
+                <div class="bg-indigo-900/10 p-3 rounded-2xl border border-indigo-500/20 text-indigo-400">
                     <label class="text-[8px] text-indigo-500 font-bold uppercase block mb-1">00631L (40%)</label>
                     <input type="number" id="v_631" value="200000" oninput="refreshEngine()" class="w-full bg-transparent text-lg font-black font-mono outline-none">
                 </div>
-                <div class="bg-emerald-900/10 p-3 rounded-2xl border border-emerald-500/20">
+                <div class="bg-emerald-900/10 p-3 rounded-2xl border border-emerald-500/20 text-emerald-400">
                     <label class="text-[8px] text-emerald-500 font-bold uppercase block mb-1">類現金 (20%)</label>
                     <input type="number" id="v_cash" value="185000" oninput="refreshEngine()" class="w-full bg-transparent text-lg font-black font-mono outline-none">
                 </div>
@@ -74,27 +79,18 @@
         <div id="panel_leverage" class="space-y-4 hidden">
             <div class="demon-card p-8 text-center border-red-500/30">
                 <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2">質押維持率</p>
-                <p id="m_rate" class="text-6xl font-black italic text-emerald-500">---%</p>
+                <p id="m_rate" class="text-6xl font-black italic">---%</p>
                 <div id="status_tag" class="mt-4 inline-block px-4 py-1 rounded-full text-[10px] font-black uppercase"></div>
             </div>
-
-            <div class="demon-card p-6 space-y-6">
+            <div class="demon-card p-6 space-y-4">
                 <div>
-                    <label class="text-xs text-red-500 font-black uppercase block mb-2 tracking-widest">質押部位市值 (如 00662)</label>
+                    <label class="text-xs text-red-500 font-black uppercase block mb-2">質押部位市值</label>
                     <input type="number" id="v_collateral" value="500000" oninput="refreshEngine()" class="w-full bg-black/40 p-4 rounded-2xl border border-white/10 text-2xl font-black font-mono outline-none text-white">
-                    <p class="text-[8px] text-slate-500 mt-2 italic">* 僅填寫你拿去質押的標的市值</p>
                 </div>
                 <div>
-                    <label class="text-xs text-red-500 font-black uppercase block mb-2 tracking-widest">目前借款金額</label>
+                    <label class="text-xs text-red-500 font-black uppercase block mb-2">目前借款金額</label>
                     <input type="number" id="v_loan" value="300000" oninput="refreshEngine()" class="w-full bg-black/40 p-4 rounded-2xl border border-white/10 text-2xl font-black font-mono outline-none text-white">
                 </div>
-            </div>
-
-            <div class="demon-card overflow-hidden">
-                <table class="w-full text-center text-[10px]">
-                    <thead class="bg-white/5 text-slate-500 uppercase"><tr class="h-10"><th>擔保品跌幅</th><th>市值</th><th>維持率</th></tr></thead>
-                    <tbody id="stress_table" class="font-mono text-slate-400"></tbody>
-                </table>
             </div>
         </div>
     </div>
@@ -108,7 +104,7 @@
             document.getElementById('panel_leverage').classList.toggle('hidden', tab !== 'leverage');
             document.getElementById('tab_s').className = `flex-1 py-3 text-xs font-black uppercase tracking-widest ${tab==='shannon'?'tab-active':'text-slate-500'}`;
             document.getElementById('tab_l').className = `flex-1 py-3 text-xs font-black uppercase tracking-widest ${tab==='leverage'?'tab-active':'text-slate-500'}`;
-            if(tab === 'shannon') refreshEngine(); // 切換回來重繪圖表
+            if(tab === 'shannon') refreshEngine();
         }
 
         function refreshEngine() {
@@ -120,17 +116,28 @@
             const vCol = parseFloat(document.getElementById('v_collateral').value) || 0;
             
             const total = v662 + v631 + vCash;
-            const isMonthlyLocked = localStorage.getItem('last_monthly_v83') === (new Date().getFullYear() + '-' + new Date().getMonth());
+            const currentMonthKey = new Date().getFullYear() + '-' + new Date().getMonth();
+            const isMonthlyLocked = localStorage.getItem('last_monthly_v831') === currentMonthKey;
 
-            // 1. 維持率運算 (獨立分頁)
+            // 維持率
             const mRate = (vCol / vLoan) * 100;
             const mRateEl = document.getElementById('m_rate');
             mRateEl.innerText = Math.round(mRate) + '%';
-            mRateEl.className = `text-6xl font-black italic transition-all ${mRate < 166 ? 'text-red-500' : (mRate < 200 ? 'text-amber-500' : 'text-emerald-500')}`;
+            mRateEl.className = `text-6xl font-black italic ${mRate < 166 ? 'text-red-500' : (mRate < 200 ? 'text-amber-500' : 'text-emerald-500')}`;
             document.getElementById('status_tag').innerText = mRate < 166 ? "🚨 斷頭風險" : (mRate < 200 ? "⚠️ 壓力警戒" : "🛡️ 安全無虞");
             document.getElementById('status_tag').className = `mt-4 inline-block px-4 py-1 rounded-full text-[10px] font-black uppercase ${mRate < 166 ? 'bg-red-500 text-white' : 'bg-emerald-500/20 text-emerald-400'}`;
 
-            // 2. 夏農再平衡 (4:4:2)
+            // 月初解鎖邏輯修正
+            const mBtn = document.getElementById('monthly_btn');
+            if (isMonthlyLocked) {
+                mBtn.innerText = "本月已完成";
+                mBtn.classList.add('btn-locked');
+            } else {
+                mBtn.innerText = "本月補給 (2.5W)";
+                mBtn.classList.remove('btn-locked');
+            }
+
+            // 4:4:2 平衡計算
             const calcAlloc = (amt) => {
                 if (amt <= 0) return [0,0,0];
                 const targetTotal = total + amt;
@@ -153,16 +160,15 @@
                     <div class="text-emerald-400"><p class="text-[7px]">類現金</p>+$${(lastAlloc.m[2]+lastAlloc.b[2]).toLocaleString()}</div>
                 </div>`;
 
-            // 3. 圓餅圖更新
             updateChart(v662, v631, vCash);
-            updateStress(vCol, vLoan);
             updateCountdown();
         }
 
         function commitMonthly() {
-            localStorage.setItem('last_monthly_v83', new Date().getFullYear() + '-' + new Date().getMonth());
+            const currentMonthKey = new Date().getFullYear() + '-' + new Date().getMonth();
+            localStorage.setItem('last_monthly_v831', currentMonthKey);
             updateAsset(lastAlloc.m[0], lastAlloc.m[1], lastAlloc.m[2]);
-            refreshEngine();
+            refreshEngine(); // 重新計算會觸發按鈕變灰
         }
 
         function commitBonus() {
@@ -196,16 +202,6 @@
                 <div class="text-center"><p class="text-xs text-sky-400 font-black">${Math.round(v1/t*100)}%</p><p class="text-[7px] text-slate-600 uppercase">662</p></div>
                 <div class="text-center"><p class="text-xs text-indigo-400 font-black">${Math.round(v2/t*100)}%</p><p class="text-[7px] text-slate-600 uppercase">631L</p></div>
                 <div class="text-center"><p class="text-xs text-emerald-400 font-black">${Math.round(v3/t*100)}%</p><p class="text-[7px] text-slate-600 uppercase">Cash</p></div>`;
-        }
-
-        function updateStress(vCol, vLoan) {
-            let html = "";
-            [0.1, 0.2, 0.3, 0.4, 0.5].forEach(d => {
-                const sC = vCol * (1 - d);
-                const sR = (sC / vLoan) * 100;
-                html += `<tr class="border-b border-white/5 h-10 ${sR < 166 ? 'text-red-500' : ''}"><td>-${d*100}%</td><td>$${Math.round(sC/10000)}萬</td><td>${Math.round(sR)}%</td></tr>`;
-            });
-            document.getElementById('stress_table').innerHTML = html;
         }
 
         function updateCountdown() {
