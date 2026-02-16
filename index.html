@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Shannon's Demon V8.7</title>
+    <title>Shannon's Demon V8.7.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -11,6 +11,19 @@
         .demon-card { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(226, 18, 18, 0.1); border-radius: 24px; }
         .tab-active { color: #ef4444; border-bottom: 2px solid #ef4444; }
         input[type="number"]::-webkit-inner-spin-button { display: none; }
+        
+        /* 綠光呼吸閃爍動畫 */
+        @keyframes pulse-green {
+            0%, 100% { opacity: 1; text-shadow: 0 0 8px rgba(34, 197, 94, 0.8); }
+            50% { opacity: 0.5; text-shadow: 0 0 2px rgba(34, 197, 94, 0.2); }
+        }
+        .smart-hint-classic {
+            color: #22c55e;
+            animation: pulse-green 2s infinite ease-in-out;
+            font-weight: 900;
+            letter-spacing: -0.025em;
+        }
+
         .input-flash { animation: flash 0.6s ease; }
         @keyframes flash { 0% { background: rgba(239, 68, 68, 0.3); } 100% { background: transparent; } }
         .hidden { display: none; }
@@ -23,7 +36,7 @@
         <div class="flex justify-between items-center px-2">
             <div>
                 <h1 class="text-2xl font-black italic text-red-600 tracking-tighter">Shannon's Demon</h1>
-                <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Intelligent Navigator</p>
+                <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Tactical HUD V8.7.1</p>
             </div>
             <div id="countdown_days" class="text-xs font-mono text-slate-500 bg-white/5 px-2 py-1 rounded-lg">--- Days</div>
         </div>
@@ -63,9 +76,9 @@
                 <div id="chart_legend" class="grid grid-cols-3 gap-4 w-full mt-6 border-t border-white/5 pt-4"></div>
             </div>
 
-            <div class="demon-card p-5 border-l-4 border-red-600">
+            <div class="demon-card p-5 border-l-4 border-green-600">
                 <div class="flex justify-between items-center mb-3">
-                    <div id="smart_hint" class="text-[11px] font-black text-white bg-red-900/40 px-3 py-1 rounded-full border border-red-500/30 tracking-tight">
+                    <div id="smart_hint" class="smart-hint-classic text-sm">
                         智能建議：分析中...
                     </div>
                     <button id="monthly_btn" onclick="commitMonthly()" class="bg-red-700 text-white text-[9px] font-black px-4 py-2 rounded-xl active:scale-95 transition-all shadow-lg shadow-red-900/20">
@@ -80,17 +93,17 @@
             </div>
 
             <div class="demon-card p-5 grid grid-cols-1 gap-3">
-                <div class="bg-sky-900/10 p-3 rounded-2xl border border-sky-500/20">
-                    <label class="text-[8px] text-sky-500 font-bold uppercase block mb-1 tracking-widest">00662 (40%)</label>
-                    <input type="number" id="v_662" value="200000" oninput="saveAndRefresh()" class="w-full bg-transparent text-lg font-black font-mono outline-none text-sky-400">
+                <div class="bg-sky-900/10 p-3 rounded-2xl border border-sky-500/20 text-sky-400">
+                    <label class="text-[8px] font-bold uppercase block mb-1 tracking-widest">00662 (40%)</label>
+                    <input type="number" id="v_662" value="200000" oninput="saveAndRefresh()" class="w-full bg-transparent text-lg font-black font-mono outline-none">
                 </div>
-                <div class="bg-indigo-900/10 p-3 rounded-2xl border border-indigo-500/20">
-                    <label class="text-[8px] text-indigo-500 font-bold uppercase block mb-1 tracking-widest">00631L (40%)</label>
-                    <input type="number" id="v_631" value="200000" oninput="saveAndRefresh()" class="w-full bg-transparent text-lg font-black font-mono outline-none text-indigo-400">
+                <div class="bg-indigo-900/10 p-3 rounded-2xl border border-indigo-500/20 text-indigo-400">
+                    <label class="text-[8px] font-bold uppercase block mb-1 tracking-widest">00631L (40%)</label>
+                    <input type="number" id="v_631" value="200000" oninput="saveAndRefresh()" class="w-full bg-transparent text-lg font-black font-mono outline-none">
                 </div>
-                <div class="bg-emerald-900/10 p-3 rounded-2xl border border-emerald-500/20">
-                    <label class="text-[8px] text-emerald-500 font-bold uppercase block mb-1 tracking-widest">Cash (20%)</label>
-                    <input type="number" id="v_cash" value="185000" oninput="saveAndRefresh()" class="w-full bg-transparent text-lg font-black font-mono outline-none text-emerald-400">
+                <div class="bg-emerald-900/10 p-3 rounded-2xl border border-emerald-500/20 text-emerald-400">
+                    <label class="text-[8px] font-bold uppercase block mb-1 tracking-widest">Cash (20%)</label>
+                    <input type="number" id="v_cash" value="185000" oninput="saveAndRefresh()" class="w-full bg-transparent text-lg font-black font-mono outline-none">
                 </div>
             </div>
         </div>
@@ -120,10 +133,11 @@
         let myChart;
         let lastAlloc = { m: [0,0,0], b: [0,0,0] };
         const fields = ['v_662', 'v_631', 'v_cash', 'v_collateral', 'v_loan'];
+        const vKey = 'shannon_v871_';
 
         window.onload = () => {
             fields.forEach(id => {
-                const saved = localStorage.getItem('shannon_v87_' + id);
+                const saved = localStorage.getItem(vKey + id);
                 if (saved) document.getElementById(id).value = saved;
             });
             refreshEngine();
@@ -131,7 +145,7 @@
 
         function saveAndRefresh() {
             fields.forEach(id => {
-                localStorage.setItem('shannon_v87_' + id, document.getElementById(id).value);
+                localStorage.setItem(vKey + id, document.getElementById(id).value);
             });
             refreshEngine();
         }
@@ -151,10 +165,9 @@
             const vBonus = parseFloat(document.getElementById('v_bonus').value) || 0;
             const vLoan = parseFloat(document.getElementById('v_loan').value) || 1;
             const vCol = parseFloat(document.getElementById('v_collateral').value) || 0;
-            
             const total = v662 + v631 + vCash;
 
-            // BETA 與 曝險
+            // BETA 曝險
             const exposure = (v662 * 1.0) + (v631 * 2.0);
             const sysBeta = total > 0 ? (exposure / total) : 0;
             const expRatio = total > 0 ? (exposure / total) * 100 : 0;
@@ -162,17 +175,17 @@
             document.getElementById('exp_ratio').innerText = Math.round(expRatio) + '%';
             document.getElementById('exp_amt').innerText = `$${(exposure/10000).toFixed(1)}萬`;
 
-            // 智能建議邏輯
+            // 智能建議邏輯 (綠光)
             const targetRatio = [0.4, 0.4, 0.2];
             const currentRatio = [v662/total, v631/total, vCash/total];
             const diffs = targetRatio.map((tr, i) => tr - currentRatio[i]);
             const maxDiffIdx = diffs.indexOf(Math.max(...diffs));
-            const labels = ["補強 00662", "補強 00631L", "補強 Cash"];
-            document.getElementById('smart_hint').innerText = "建議策略：" + labels[maxDiffIdx];
+            const labels = ["需補強部位：00662", "需補強部位：00631L", "需補強部位：Cash"];
+            document.getElementById('smart_hint').innerText = labels[maxDiffIdx];
 
-            // 存檔與補給鎖定
-            const currentMonthKey = new Date().getFullYear() + '-' + new Date().getMonth();
-            const isMonthlyLocked = localStorage.getItem('last_monthly_v87') === currentMonthKey;
+            // 補給鎖定
+            const curMonth = new Date().getFullYear() + '-' + new Date().getMonth();
+            const isLocked = localStorage.getItem(vKey + 'lock') === curMonth;
 
             const mRate = (vCol / vLoan) * 100;
             const mRateEl = document.getElementById('m_rate');
@@ -182,8 +195,8 @@
             document.getElementById('status_tag').className = `mt-4 inline-block px-4 py-1 rounded-full text-[10px] font-black uppercase ${mRate < 166 ? 'bg-red-500 text-white' : 'bg-emerald-500/20 text-emerald-400'}`;
 
             const mBtn = document.getElementById('monthly_btn');
-            mBtn.innerText = isMonthlyLocked ? "本月已完成" : "執行補給 (2.5W)";
-            if (isMonthlyLocked) mBtn.classList.add('btn-locked'); else mBtn.classList.remove('btn-locked');
+            mBtn.innerText = isLocked ? "本月已完成" : "執行補給 (2.5W)";
+            if (isLocked) mBtn.classList.add('btn-locked'); else mBtn.classList.remove('btn-locked');
 
             const calcAlloc = (amt) => {
                 if (amt <= 0) return [0,0,0];
@@ -196,15 +209,15 @@
                 const a2 = Math.round((d631/sum)*amt);
                 return [a1, a2, amt - a1 - a2];
             };
-            lastAlloc.m = calcAlloc(isMonthlyLocked ? 0 : 25000);
+            lastAlloc.m = calcAlloc(isLocked ? 0 : 25000);
             lastAlloc.b = calcAlloc(vBonus);
 
             document.getElementById('total_wealth').innerText = `$${(total/10000).toFixed(1)}萬`;
             document.getElementById('ins_body').innerHTML = `
                 <div class="grid grid-cols-3 gap-2 text-center bg-black/60 p-2 rounded-xl border border-white/5">
-                    <div class="text-sky-400"><p class="text-[7px] uppercase">00662</p>+$${(lastAlloc.m[0]+lastAlloc.b[0]).toLocaleString()}</div>
-                    <div class="text-indigo-400"><p class="text-[7px] uppercase">00631L</p>+$${(lastAlloc.m[1]+lastAlloc.b[1]).toLocaleString()}</div>
-                    <div class="text-emerald-400"><p class="text-[7px] uppercase">Cash</p>+$${(lastAlloc.m[2]+lastAlloc.b[2]).toLocaleString()}</div>
+                    <div class="text-sky-400"><p class="text-[7px] uppercase font-bold">00662</p>+$${(lastAlloc.m[0]+lastAlloc.b[0]).toLocaleString()}</div>
+                    <div class="text-indigo-400"><p class="text-[7px] uppercase font-bold">00631L</p>+$${(lastAlloc.m[1]+lastAlloc.b[1]).toLocaleString()}</div>
+                    <div class="text-emerald-400"><p class="text-[7px] uppercase font-bold">Cash</p>+$${(lastAlloc.m[2]+lastAlloc.b[2]).toLocaleString()}</div>
                 </div>`;
 
             updateChart(v662, v631, vCash);
@@ -213,8 +226,8 @@
         }
 
         function commitMonthly() {
-            const currentMonthKey = new Date().getFullYear() + '-' + new Date().getMonth();
-            localStorage.setItem('last_monthly_v87', currentMonthKey);
+            const curMonth = new Date().getFullYear() + '-' + new Date().getMonth();
+            localStorage.setItem(vKey + 'lock', curMonth);
             applyDelta(lastAlloc.m[0], lastAlloc.m[1], lastAlloc.m[2]);
         }
 
@@ -225,9 +238,9 @@
         }
 
         function applyDelta(a1, a2, a3) {
-            const targetIds = ['v_662', 'v_631', 'v_cash'];
+            const targets = ['v_662', 'v_631', 'v_cash'];
             const deltas = [a1, a2, a3];
-            targetIds.forEach((id, i) => {
+            targets.forEach((id, i) => {
                 const el = document.getElementById(id);
                 el.value = parseInt(el.value) + deltas[i];
                 el.parentElement.classList.add('input-flash');
@@ -246,9 +259,9 @@
             });
             const t = v1 + v2 + v3 || 1;
             document.getElementById('chart_legend').innerHTML = `
-                <div class="text-center"><p class="text-xs text-sky-400 font-black">${Math.round(v1/t*100)}%</p><p class="text-[7px] text-slate-600">00662</p></div>
-                <div class="text-center"><p class="text-xs text-indigo-400 font-black">${Math.round(v2/t*100)}%</p><p class="text-[7px] text-slate-600">00631L</p></div>
-                <div class="text-center"><p class="text-xs text-emerald-400 font-black">${Math.round(v3/t*100)}%</p><p class="text-[7px] text-slate-600">CASH</p></div>`;
+                <div class="text-center"><p class="text-xs text-sky-400 font-black">${Math.round(v1/t*100)}%</p><p class="text-[7px] text-slate-600 font-bold uppercase">00662</p></div>
+                <div class="text-center"><p class="text-xs text-indigo-400 font-black">${Math.round(v2/t*100)}%</p><p class="text-[7px] text-slate-600 font-bold uppercase">00631L</p></div>
+                <div class="text-center"><p class="text-xs text-emerald-400 font-black">${Math.round(v3/t*100)}%</p><p class="text-[7px] text-slate-600 font-bold uppercase">Cash</p></div>`;
         }
 
         function updateStress(vCol, vLoan) {
@@ -256,7 +269,7 @@
             [0.1, 0.2, 0.3, 0.4, 0.5].forEach(d => {
                 const sC = vCol * (1 - d);
                 const sR = (sC / vLoan) * 100;
-                html += `<tr class="border-b border-white/5 h-10 ${sR < 166 ? 'text-red-500' : ''}"><td>-${d*100}%</td><td>$${Math.round(sC/10000)}萬</td><td class="font-black">${Math.round(sR)}%</td></tr>`;
+                html += `<tr class="border-b border-white/5 h-10 ${sR < 166 ? 'text-red-500 font-black' : ''}"><td>-${d*100}%</td><td>$${Math.round(sC/10000)}萬</td><td>${Math.round(sR)}%</td></tr>`;
             });
             document.getElementById('stress_table').innerHTML = html;
         }
