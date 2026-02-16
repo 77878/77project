@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Shannon's Demon V8.6</title>
+    <title>Shannon's Demon V8.7</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -23,7 +23,7 @@
         <div class="flex justify-between items-center px-2">
             <div>
                 <h1 class="text-2xl font-black italic text-red-600 tracking-tighter">Shannon's Demon</h1>
-                <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Exposure Ratio Lab</p>
+                <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Intelligent Navigator</p>
             </div>
             <div id="countdown_days" class="text-xs font-mono text-slate-500 bg-white/5 px-2 py-1 rounded-lg">--- Days</div>
         </div>
@@ -57,7 +57,6 @@
                         <div>
                             <p class="text-[9px] text-slate-500 font-bold uppercase mb-1">曝險金額</p>
                             <p id="exp_amt" class="text-xl font-black text-white font-mono">$---</p>
-                            <p class="text-[7px] text-slate-600 italic">市場波動體感價值</p>
                         </div>
                     </div>
                 </div>
@@ -65,9 +64,13 @@
             </div>
 
             <div class="demon-card p-5 border-l-4 border-red-600">
-                <div class="flex justify-between items-center mb-4">
-                    <span class="text-[10px] font-black text-red-500 uppercase italic">Monthly Supply</span>
-                    <button id="monthly_btn" onclick="commitMonthly()" class="bg-red-700 text-white text-[9px] font-black px-4 py-2 rounded-xl active:scale-95 transition-all shadow-lg shadow-red-900/20">執行補給 (2.5W)</button>
+                <div class="flex justify-between items-center mb-3">
+                    <div id="smart_hint" class="text-[11px] font-black text-white bg-red-900/40 px-3 py-1 rounded-full border border-red-500/30 tracking-tight">
+                        智能建議：分析中...
+                    </div>
+                    <button id="monthly_btn" onclick="commitMonthly()" class="bg-red-700 text-white text-[9px] font-black px-4 py-2 rounded-xl active:scale-95 transition-all shadow-lg shadow-red-900/20">
+                        執行補給 (2.5W)
+                    </button>
                 </div>
                 <div class="flex items-center gap-2 mb-3">
                     <input type="number" id="v_bonus" placeholder="加碼獎金" oninput="refreshEngine()" class="flex-1 bg-black/40 px-3 py-2 rounded-xl border border-white/5 text-xs text-red-400 outline-none">
@@ -120,7 +123,7 @@
 
         window.onload = () => {
             fields.forEach(id => {
-                const saved = localStorage.getItem('shannon_v86_' + id);
+                const saved = localStorage.getItem('shannon_v87_' + id);
                 if (saved) document.getElementById(id).value = saved;
             });
             refreshEngine();
@@ -128,7 +131,7 @@
 
         function saveAndRefresh() {
             fields.forEach(id => {
-                localStorage.setItem('shannon_v86_' + id, document.getElementById(id).value);
+                localStorage.setItem('shannon_v87_' + id, document.getElementById(id).value);
             });
             refreshEngine();
         }
@@ -151,20 +154,26 @@
             
             const total = v662 + v631 + vCash;
 
-            // BETA 與 曝險佔比邏輯
+            // BETA 與 曝險
             const exposure = (v662 * 1.0) + (v631 * 2.0);
             const sysBeta = total > 0 ? (exposure / total) : 0;
             const expRatio = total > 0 ? (exposure / total) * 100 : 0;
-
             document.getElementById('sys_beta').innerText = sysBeta.toFixed(2);
             document.getElementById('exp_ratio').innerText = Math.round(expRatio) + '%';
             document.getElementById('exp_amt').innerText = `$${(exposure/10000).toFixed(1)}萬`;
 
-            // 存檔 Key 更新 (避免與舊版衝突)
-            const currentMonthKey = new Date().getFullYear() + '-' + new Date().getMonth();
-            const isMonthlyLocked = localStorage.getItem('last_monthly_v86') === currentMonthKey;
+            // 智能建議邏輯
+            const targetRatio = [0.4, 0.4, 0.2];
+            const currentRatio = [v662/total, v631/total, vCash/total];
+            const diffs = targetRatio.map((tr, i) => tr - currentRatio[i]);
+            const maxDiffIdx = diffs.indexOf(Math.max(...diffs));
+            const labels = ["補強 00662", "補強 00631L", "補強 Cash"];
+            document.getElementById('smart_hint').innerText = "建議策略：" + labels[maxDiffIdx];
 
-            // 維持率
+            // 存檔與補給鎖定
+            const currentMonthKey = new Date().getFullYear() + '-' + new Date().getMonth();
+            const isMonthlyLocked = localStorage.getItem('last_monthly_v87') === currentMonthKey;
+
             const mRate = (vCol / vLoan) * 100;
             const mRateEl = document.getElementById('m_rate');
             mRateEl.innerText = Math.round(mRate) + '%';
@@ -172,7 +181,6 @@
             document.getElementById('status_tag').innerText = mRate < 166 ? "🚨 Margin Call" : (mRate < 200 ? "⚠️ Warning" : "🛡️ Stable");
             document.getElementById('status_tag').className = `mt-4 inline-block px-4 py-1 rounded-full text-[10px] font-black uppercase ${mRate < 166 ? 'bg-red-500 text-white' : 'bg-emerald-500/20 text-emerald-400'}`;
 
-            // 按鈕
             const mBtn = document.getElementById('monthly_btn');
             mBtn.innerText = isMonthlyLocked ? "本月已完成" : "執行補給 (2.5W)";
             if (isMonthlyLocked) mBtn.classList.add('btn-locked'); else mBtn.classList.remove('btn-locked');
@@ -206,7 +214,7 @@
 
         function commitMonthly() {
             const currentMonthKey = new Date().getFullYear() + '-' + new Date().getMonth();
-            localStorage.setItem('last_monthly_v86', currentMonthKey);
+            localStorage.setItem('last_monthly_v87', currentMonthKey);
             applyDelta(lastAlloc.m[0], lastAlloc.m[1], lastAlloc.m[2]);
         }
 
