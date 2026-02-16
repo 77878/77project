@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Shannon's Demon V8.5.1</title>
+    <title>Shannon's Demon V8.6</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -23,7 +23,7 @@
         <div class="flex justify-between items-center px-2">
             <div>
                 <h1 class="text-2xl font-black italic text-red-600 tracking-tighter">Shannon's Demon</h1>
-                <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Risk Exposure Protocol</p>
+                <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Exposure Ratio Lab</p>
             </div>
             <div id="countdown_days" class="text-xs font-mono text-slate-500 bg-white/5 px-2 py-1 rounded-lg">--- Days</div>
         </div>
@@ -44,12 +44,18 @@
                         </div>
                     </div>
                     <div class="flex-1 space-y-3 border-l border-white/5 pl-4">
-                        <div>
-                            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">系統 Beta</p>
-                            <p id="sys_beta" class="text-xl font-black text-red-500 font-mono">---</p>
+                        <div class="flex justify-between items-end">
+                            <div>
+                                <p class="text-[9px] text-slate-500 font-bold uppercase">系統 Beta</p>
+                                <p id="sys_beta" class="text-xl font-black text-red-500 font-mono">---</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[9px] text-slate-500 font-bold uppercase">曝險佔比</p>
+                                <p id="exp_ratio" class="text-sm font-black text-amber-500 font-mono">---%</p>
+                            </div>
                         </div>
                         <div>
-                            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">曝險金額</p>
+                            <p class="text-[9px] text-slate-500 font-bold uppercase mb-1">曝險金額</p>
                             <p id="exp_amt" class="text-xl font-black text-white font-mono">$---</p>
                             <p class="text-[7px] text-slate-600 italic">市場波動體感價值</p>
                         </div>
@@ -61,9 +67,7 @@
             <div class="demon-card p-5 border-l-4 border-red-600">
                 <div class="flex justify-between items-center mb-4">
                     <span class="text-[10px] font-black text-red-500 uppercase italic">Monthly Supply</span>
-                    <button id="monthly_btn" onclick="commitMonthly()" class="bg-red-700 text-white text-[9px] font-black px-4 py-2 rounded-xl active:scale-95 transition-all shadow-lg shadow-red-900/20">
-                        執行補給 (2.5W)
-                    </button>
+                    <button id="monthly_btn" onclick="commitMonthly()" class="bg-red-700 text-white text-[9px] font-black px-4 py-2 rounded-xl active:scale-95 transition-all shadow-lg shadow-red-900/20">執行補給 (2.5W)</button>
                 </div>
                 <div class="flex items-center gap-2 mb-3">
                     <input type="number" id="v_bonus" placeholder="加碼獎金" oninput="refreshEngine()" class="flex-1 bg-black/40 px-3 py-2 rounded-xl border border-white/5 text-xs text-red-400 outline-none">
@@ -89,7 +93,7 @@
         </div>
 
         <div id="panel_leverage" class="space-y-4 hidden">
-            <div class="demon-card p-8 text-center border-red-500/30 shadow-xl">
+             <div class="demon-card p-8 text-center border-red-500/30 shadow-xl">
                 <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2">Leverage Maintenance</p>
                 <p id="m_rate" class="text-6xl font-black italic">---%</p>
                 <div id="status_tag" class="mt-4 inline-block px-4 py-1 rounded-full text-[10px] font-black uppercase"></div>
@@ -116,7 +120,7 @@
 
         window.onload = () => {
             fields.forEach(id => {
-                const saved = localStorage.getItem('shannon_v851_' + id);
+                const saved = localStorage.getItem('shannon_v86_' + id);
                 if (saved) document.getElementById(id).value = saved;
             });
             refreshEngine();
@@ -124,7 +128,7 @@
 
         function saveAndRefresh() {
             fields.forEach(id => {
-                localStorage.setItem('shannon_v851_' + id, document.getElementById(id).value);
+                localStorage.setItem('shannon_v86_' + id, document.getElementById(id).value);
             });
             refreshEngine();
         }
@@ -147,16 +151,20 @@
             
             const total = v662 + v631 + vCash;
 
-            // BETA 曝險邏輯
+            // BETA 與 曝險佔比邏輯
             const exposure = (v662 * 1.0) + (v631 * 2.0);
             const sysBeta = total > 0 ? (exposure / total) : 0;
+            const expRatio = total > 0 ? (exposure / total) * 100 : 0;
+
             document.getElementById('sys_beta').innerText = sysBeta.toFixed(2);
+            document.getElementById('exp_ratio').innerText = Math.round(expRatio) + '%';
             document.getElementById('exp_amt').innerText = `$${(exposure/10000).toFixed(1)}萬`;
 
-            // 狀態與存檔
+            // 存檔 Key 更新 (避免與舊版衝突)
             const currentMonthKey = new Date().getFullYear() + '-' + new Date().getMonth();
-            const isMonthlyLocked = localStorage.getItem('last_monthly_v851') === currentMonthKey;
+            const isMonthlyLocked = localStorage.getItem('last_monthly_v86') === currentMonthKey;
 
+            // 維持率
             const mRate = (vCol / vLoan) * 100;
             const mRateEl = document.getElementById('m_rate');
             mRateEl.innerText = Math.round(mRate) + '%';
@@ -164,6 +172,7 @@
             document.getElementById('status_tag').innerText = mRate < 166 ? "🚨 Margin Call" : (mRate < 200 ? "⚠️ Warning" : "🛡️ Stable");
             document.getElementById('status_tag').className = `mt-4 inline-block px-4 py-1 rounded-full text-[10px] font-black uppercase ${mRate < 166 ? 'bg-red-500 text-white' : 'bg-emerald-500/20 text-emerald-400'}`;
 
+            // 按鈕
             const mBtn = document.getElementById('monthly_btn');
             mBtn.innerText = isMonthlyLocked ? "本月已完成" : "執行補給 (2.5W)";
             if (isMonthlyLocked) mBtn.classList.add('btn-locked'); else mBtn.classList.remove('btn-locked');
@@ -197,7 +206,7 @@
 
         function commitMonthly() {
             const currentMonthKey = new Date().getFullYear() + '-' + new Date().getMonth();
-            localStorage.setItem('last_monthly_v851', currentMonthKey);
+            localStorage.setItem('last_monthly_v86', currentMonthKey);
             applyDelta(lastAlloc.m[0], lastAlloc.m[1], lastAlloc.m[2]);
         }
 
