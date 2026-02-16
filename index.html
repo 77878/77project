@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Shannon's Demon V8.7.1</title>
+    <title>Shannon's Demon V8.7.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -14,14 +14,13 @@
         
         /* 綠光呼吸閃爍動畫 */
         @keyframes pulse-green {
-            0%, 100% { opacity: 1; text-shadow: 0 0 8px rgba(34, 197, 94, 0.8); }
-            50% { opacity: 0.5; text-shadow: 0 0 2px rgba(34, 197, 94, 0.2); }
+            0%, 100% { opacity: 1; text-shadow: 0 0 6px rgba(34, 197, 94, 0.6); }
+            50% { opacity: 0.4; text-shadow: 0 0 1px rgba(34, 197, 94, 0.1); }
         }
         .smart-hint-classic {
             color: #22c55e;
-            animation: pulse-green 2s infinite ease-in-out;
-            font-weight: 900;
-            letter-spacing: -0.025em;
+            animation: pulse-green 2.5s infinite ease-in-out;
+            font-weight: 800;
         }
 
         .input-flash { animation: flash 0.6s ease; }
@@ -36,7 +35,7 @@
         <div class="flex justify-between items-center px-2">
             <div>
                 <h1 class="text-2xl font-black italic text-red-600 tracking-tighter">Shannon's Demon</h1>
-                <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Tactical HUD V8.7.1</p>
+                <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Tactical HUD V8.7.2</p>
             </div>
             <div id="countdown_days" class="text-xs font-mono text-slate-500 bg-white/5 px-2 py-1 rounded-lg">--- Days</div>
         </div>
@@ -78,8 +77,11 @@
 
             <div class="demon-card p-5 border-l-4 border-green-600">
                 <div class="flex justify-between items-center mb-3">
-                    <div id="smart_hint" class="smart-hint-classic text-sm">
-                        智能建議：分析中...
+                    <div class="space-y-0.5">
+                        <p class="text-[10px] text-slate-500 font-black uppercase tracking-tight">智能建議</p>
+                        <div id="smart_hint" class="smart-hint-classic text-[11px]">
+                            分析中...
+                        </div>
                     </div>
                     <button id="monthly_btn" onclick="commitMonthly()" class="bg-red-700 text-white text-[9px] font-black px-4 py-2 rounded-xl active:scale-95 transition-all shadow-lg shadow-red-900/20">
                         執行補給 (2.5W)
@@ -133,7 +135,7 @@
         let myChart;
         let lastAlloc = { m: [0,0,0], b: [0,0,0] };
         const fields = ['v_662', 'v_631', 'v_cash', 'v_collateral', 'v_loan'];
-        const vKey = 'shannon_v871_';
+        const vKey = 'shannon_v872_';
 
         window.onload = () => {
             fields.forEach(id => {
@@ -167,7 +169,6 @@
             const vCol = parseFloat(document.getElementById('v_collateral').value) || 0;
             const total = v662 + v631 + vCash;
 
-            // BETA 曝險
             const exposure = (v662 * 1.0) + (v631 * 2.0);
             const sysBeta = total > 0 ? (exposure / total) : 0;
             const expRatio = total > 0 ? (exposure / total) * 100 : 0;
@@ -175,7 +176,6 @@
             document.getElementById('exp_ratio').innerText = Math.round(expRatio) + '%';
             document.getElementById('exp_amt').innerText = `$${(exposure/10000).toFixed(1)}萬`;
 
-            // 智能建議邏輯 (綠光)
             const targetRatio = [0.4, 0.4, 0.2];
             const currentRatio = [v662/total, v631/total, vCash/total];
             const diffs = targetRatio.map((tr, i) => tr - currentRatio[i]);
@@ -183,7 +183,6 @@
             const labels = ["需補強部位：00662", "需補強部位：00631L", "需補強部位：Cash"];
             document.getElementById('smart_hint').innerText = labels[maxDiffIdx];
 
-            // 補給鎖定
             const curMonth = new Date().getFullYear() + '-' + new Date().getMonth();
             const isLocked = localStorage.getItem(vKey + 'lock') === curMonth;
 
