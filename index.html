@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Shannon's Demon V8.5</title>
+    <title>Shannon's Demon V8.5.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -23,7 +23,7 @@
         <div class="flex justify-between items-center px-2">
             <div>
                 <h1 class="text-2xl font-black italic text-red-600 tracking-tighter">Shannon's Demon</h1>
-                <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">BETA Exposure Lab</p>
+                <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Risk Exposure Protocol</p>
             </div>
             <div id="countdown_days" class="text-xs font-mono text-slate-500 bg-white/5 px-2 py-1 rounded-lg">--- Days</div>
         </div>
@@ -45,13 +45,13 @@
                     </div>
                     <div class="flex-1 space-y-3 border-l border-white/5 pl-4">
                         <div>
-                            <p class="text-[8px] text-slate-500 font-bold uppercase tracking-widest">System Beta</p>
-                            <p id="sys_beta" class="text-xl font-black text-red-500 font-mono">1.20</p>
+                            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">系統 Beta</p>
+                            <p id="sys_beta" class="text-xl font-black text-red-500 font-mono">---</p>
                         </div>
                         <div>
-                            <p class="text-[8px] text-slate-500 font-bold uppercase tracking-widest">Exposure Amt</p>
+                            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">曝險金額</p>
                             <p id="exp_amt" class="text-xl font-black text-white font-mono">$---</p>
-                            <p class="text-[7px] text-slate-600 italic">等同原型資產部位</p>
+                            <p class="text-[7px] text-slate-600 italic">市場波動體感價值</p>
                         </div>
                     </div>
                 </div>
@@ -94,26 +94,15 @@
                 <p id="m_rate" class="text-6xl font-black italic">---%</p>
                 <div id="status_tag" class="mt-4 inline-block px-4 py-1 rounded-full text-[10px] font-black uppercase"></div>
             </div>
-
             <div class="demon-card p-6 space-y-5">
-                <div>
-                    <label class="text-xs text-red-500 font-black uppercase block mb-2 italic">Collateral Value</label>
-                    <input type="number" id="v_collateral" value="500000" oninput="saveAndRefresh()" class="w-full bg-black/40 p-4 rounded-2xl border border-white/10 text-2xl font-black font-mono outline-none text-white focus:border-red-500/50 transition-all">
-                </div>
-                <div>
-                    <label class="text-xs text-red-500 font-black uppercase block mb-2 italic">Loan Amount</label>
-                    <input type="number" id="v_loan" value="300000" oninput="saveAndRefresh()" class="w-full bg-black/40 p-4 rounded-2xl border border-white/10 text-2xl font-black font-mono outline-none text-white focus:border-red-500/50 transition-all">
-                </div>
+                <div><label class="text-xs text-red-500 font-black uppercase block mb-2 italic">Collateral Value</label>
+                <input type="number" id="v_collateral" value="500000" oninput="saveAndRefresh()" class="w-full bg-black/40 p-4 rounded-2xl border border-white/10 text-2xl font-black font-mono outline-none text-white focus:border-red-500/50"></div>
+                <div><label class="text-xs text-red-500 font-black uppercase block mb-2 italic">Loan Amount</label>
+                <input type="number" id="v_loan" value="300000" oninput="saveAndRefresh()" class="w-full bg-black/40 p-4 rounded-2xl border border-white/10 text-2xl font-black font-mono outline-none text-white focus:border-red-500/50"></div>
             </div>
-
             <div class="demon-card overflow-hidden">
-                <div class="bg-white/5 px-4 py-2 border-b border-white/5">
-                    <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest italic">Stress Test Matrix</p>
-                </div>
                 <table class="w-full text-center text-[10px]">
-                    <thead class="text-slate-500 uppercase h-8 border-b border-white/5">
-                        <tr><th>跌幅</th><th>預估市值</th><th>預估維持率</th></tr>
-                    </thead>
+                    <thead class="text-slate-500 uppercase h-8 border-b border-white/5"><tr><th>跌幅</th><th>預估市值</th><th>維持率</th></tr></thead>
                     <tbody id="stress_table" class="font-mono text-slate-300"></tbody>
                 </table>
             </div>
@@ -127,7 +116,7 @@
 
         window.onload = () => {
             fields.forEach(id => {
-                const saved = localStorage.getItem('shannon_v85_' + id);
+                const saved = localStorage.getItem('shannon_v851_' + id);
                 if (saved) document.getElementById(id).value = saved;
             });
             refreshEngine();
@@ -135,7 +124,7 @@
 
         function saveAndRefresh() {
             fields.forEach(id => {
-                localStorage.setItem('shannon_v85_' + id, document.getElementById(id).value);
+                localStorage.setItem('shannon_v851_' + id, document.getElementById(id).value);
             });
             refreshEngine();
         }
@@ -158,16 +147,15 @@
             
             const total = v662 + v631 + vCash;
 
-            // BETA 計算
-            const exposure = (v662 * 1.0) + (v631 * 2.0) + (vCash * 0);
+            // BETA 曝險邏輯
+            const exposure = (v662 * 1.0) + (v631 * 2.0);
             const sysBeta = total > 0 ? (exposure / total) : 0;
-            
             document.getElementById('sys_beta').innerText = sysBeta.toFixed(2);
             document.getElementById('exp_amt').innerText = `$${(exposure/10000).toFixed(1)}萬`;
 
-            // 餘下引擎邏輯...
+            // 狀態與存檔
             const currentMonthKey = new Date().getFullYear() + '-' + new Date().getMonth();
-            const isMonthlyLocked = localStorage.getItem('last_monthly_v85') === currentMonthKey;
+            const isMonthlyLocked = localStorage.getItem('last_monthly_v851') === currentMonthKey;
 
             const mRate = (vCol / vLoan) * 100;
             const mRateEl = document.getElementById('m_rate');
@@ -177,13 +165,8 @@
             document.getElementById('status_tag').className = `mt-4 inline-block px-4 py-1 rounded-full text-[10px] font-black uppercase ${mRate < 166 ? 'bg-red-500 text-white' : 'bg-emerald-500/20 text-emerald-400'}`;
 
             const mBtn = document.getElementById('monthly_btn');
-            if (isMonthlyLocked) {
-                mBtn.innerText = "本月已完成";
-                mBtn.classList.add('btn-locked');
-            } else {
-                mBtn.innerText = "執行補給 (2.5W)";
-                mBtn.classList.remove('btn-locked');
-            }
+            mBtn.innerText = isMonthlyLocked ? "本月已完成" : "執行補給 (2.5W)";
+            if (isMonthlyLocked) mBtn.classList.add('btn-locked'); else mBtn.classList.remove('btn-locked');
 
             const calcAlloc = (amt) => {
                 if (amt <= 0) return [0,0,0];
@@ -214,7 +197,7 @@
 
         function commitMonthly() {
             const currentMonthKey = new Date().getFullYear() + '-' + new Date().getMonth();
-            localStorage.setItem('last_monthly_v85', currentMonthKey);
+            localStorage.setItem('last_monthly_v851', currentMonthKey);
             applyDelta(lastAlloc.m[0], lastAlloc.m[1], lastAlloc.m[2]);
         }
 
@@ -256,11 +239,7 @@
             [0.1, 0.2, 0.3, 0.4, 0.5].forEach(d => {
                 const sC = vCol * (1 - d);
                 const sR = (sC / vLoan) * 100;
-                html += `<tr class="border-b border-white/5 h-10 ${sR < 166 ? 'text-red-500' : ''}">
-                    <td>-${d*100}%</td>
-                    <td>$${Math.round(sC/10000)}萬</td>
-                    <td class="font-black">${Math.round(sR)}%</td>
-                </tr>`;
+                html += `<tr class="border-b border-white/5 h-10 ${sR < 166 ? 'text-red-500' : ''}"><td>-${d*100}%</td><td>$${Math.round(sC/10000)}萬</td><td class="font-black">${Math.round(sR)}%</td></tr>`;
             });
             document.getElementById('stress_table').innerHTML = html;
         }
